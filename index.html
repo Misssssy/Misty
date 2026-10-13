@@ -1658,23 +1658,108 @@ R.运动=()=>{
   </details>`).join('')}`;
 };
 
-/* ⑤ 热点新闻 */
+/* ⑤ 热点新闻 —— 实时抓取
+   每个分类配多级候选 RSS 源（经 rss2json 桥转 JSON，支持跨域），
+   全部失败时回落到内置静态内容。按天+分类缓存，30 分钟过期。 */
+const NEWS_FEEDS={
+  科技:['https://www.ithome.com/rss/','https://sspai.com/feed'],
+  财经:['https://dedicate.wallstreetcn.com/rss.xml','https://feeds.a.dj.com/rss/RSSMarketsMain.xml','https://www.ithome.com/rss/'],
+  生活:['https://sspai.com/feed','https://www.ithome.com/rss/'],
+  娱乐:['https://www.ithome.com/rss/','https://sspai.com/feed'],
+  时政:['https://feedx.net/rss/thepaper.xml','https://feeds.a.dj.com/rss/RSSWorldNews.xml']
+};
+const NEWS_TTL=30*60*1000;               /* 缓存有效期：30 分钟 */
+const NEWS_LAST='newsLastTry';           /* 防抖时间戳：{cat: ms} */
+
+const newsCacheGet=(cat)=>{
+  const c=LS.get('newsCache',null);
+  if(!c||c.d!==todayKey()||!c[cat])return null;
+  const e=c[cat];
+  return (e&&e.items&&e.items.length)?e:null;
+};
+const newsCacheSet=(cat,data)=>{
+  const tk=todayKey();
+  const c=LS.get('newsCache',null)||{};
+  if(c.d!==tk){for(const k in c)delete c[k];c.d=tk}
+  c[cat]=Object.assign({at:Date.now()},data);
+  try{LS.set('newsCache',c)}catch(e){}
+};
+const newsFresh=cat=>{const e=newsCacheGet(cat);return !!e&&(Date.now()-e.at)<NEWS_TTL};
+
+/* 清洗 RSS 条目：解码实体、去 HTML 标签、压缩空白、截断摘要 */
+const newsClean=(s,n)=>{
+  const txt=String(s||'')
+    .replace(/<[^>]*>/g,' ')
+    .replace(/&nbsp;/gi,' ').replace(/&lt;/gi,'<').replace(/&gt;/gi,'>')
+    .replace(/&quot;/gi,'"').replace(/&#39;/gi,"'").replace(/&apos;/gi,"'")
+    .replace(/&mdash;/gi,'—').replace(/&hellip;/gi,'…')
+    .replace(/&amp;/gi,'&')                       /* &amp; 必须最后解码 */
+    .replace(/\s+/g,' ').trim();
+  return txt.length>n?txt.slice(0,n)+'…':txt;
+};
+
+/* 从单个 RSS 源抓取（rss2json 桥，免费无需 Key，支持 CORS） */
+const newsFetchFeed=async(feed)=>{
+  const q='https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(feed);
+  const ctl=(typeof AbortController!=='undefined')?new AbortController():null;
+  const timer=ctl?setTimeout(()=>ctl.abort(),9000):null;
+  try{
+    const r=await fetch(q,ctl?{signal:ctl.signal}:{});
+    if(!r.ok)throw new Error('http '+r.status);
+    const j=await r.json();
+    if(!j||j.status!=='ok'||!j.items||!j.items.length)throw new Error('empty');
+    return j.items.map(it=>({
+      t:newsClean(it.title,64),
+      d:newsClean(it.description||it.content,68)||newsClean(it.title,68),
+      l:it.link||'',
+      p:it.pubDate?newsClean(it.pubDate,16):''
+    }));
+  }finally{if(timer)clearTimeout(timer)}
+};
+
+/* 按分类抓取：依序尝试候选源，拿到即止 */
+const newsFetch=async(cat)=>{
+  const feeds=NEWS_FEEDS[cat]||[];
+  for(const f of feeds){
+    try{
+      const items=await newsFetchFeed(f);
+      if(items&&items.length>=3){newsCacheSet(cat,{items,src:f});return items}
+    }catch(e){/* 换下一个源 */}
+  }
+  throw new Error('all-feeds-failed');
+};
 R.新闻=()=>{
   const cats=[['科技',PASTEL[3]],['财经',PASTEL[2]],['生活',PASTEL[0]],['娱乐',PASTEL[6]],['时政',PASTEL[9]]];
   const act=LS.get('newscat','科技');
   const c=cats.find(x=>x[0]===act)||cats[0];
+  const live=newsCacheGet(act);            /* 当日实时缓存 */
+  const items=live?live.items:D.新闻[act]||[];
+  const isLive=!!live;
+  const stale=live&&!newsFresh(act);
+  const badge=isLive?(stale?'缓存':'实时'):'内置';
+  const srcName=live?(live.src||'').replace(/^https?:\/\/(www\.)?/,'').split('/')[0]:'';
+  const d=new Date();
+  const dstr=(d.getMonth()+1)+'月'+d.getDate()+'日';
   return `
-  <div class="head"><h1>📰 热点新闻</h1><p>五大分类 · 摘要速览（示例内容）</p></div>
+  <div class="head"><h1>📰 热点新闻</h1><p>${esc(dstr)} · ${isLive?'当日实时':'实时获取中，稍后自动更新'}</p></div>
   <div style="margin-bottom:9px;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none" id="newstabs">
     ${cats.map(x=>`<span class="pill" data-cat="${x[0]}" style="${x[0]===act?`background:${x[1].acc};color:#fff`:''}">${x[0]}</span>`).join('')}
   </div>
-  <div id="newslist">${D.新闻[c[0]].map((n,i)=>`
-    <div class="item" style="background:${c[1].bgc}">
+  <div id="newslist">${items.map((n,i)=>`
+    <div class="item" style="background:${c[1].bgc}" ${n.l?`data-link="${esc(n.l)}"`:''}>
       <div class="t">${esc(n.t)}</div>
       <div class="d">${esc(n.d)}</div>
-      <div class="m"><span class="tag" style="background:${c[1].tg}">${c[0]}</span><span>${i+1} / ${D.新闻[c[0]].length}</span></div>
+      <div class="m"><span class="tag" style="background:${c[1].tg}">${c[0]}</span><span>${isLive?(n.p?esc(n.p)+' · ':'')+'来源 '+esc(srcName||'RSS'):((i+1)+' / '+items.length)}</span></div>
     </div>`).join('')}</div>
-  <div class="card"><h2>阅读提示</h2><div class="mini">以上为演示用摘要内容，用于展示信息组织与分类结构。实际使用时可按自己的信息源替换 <code>D.新闻</code> 中的文本。</div></div>`;
+  <div class="card" style="--acc:${c[1].acc}">
+    <h2>数据说明 <span class="badge">${badge}${isLive&&stale?' · 建议刷新':''}</span></h2>
+    <div class="mini">${isLive
+      ?'当前为今日抓取的实时内容'+(srcName?'（源：'+esc(srcName)+'）':'')+'，点条目可打开原文。'
+      :'正在获取今日实时新闻…获取失败时会保留内置摘要。'}${stale?' 数据已超过 30 分钟，可点下方刷新。':''}</div>
+    <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+      <button class="btn sm pri" style="--acc:${c[1].acc};--accs:${c[1].accs}" id="newsrefresh">🔄 刷新新闻</button>
+    </div>
+  </div>`;
 };
 
 /* ⑥ 成长书籍 */
@@ -2221,6 +2306,38 @@ const EV={
   },
  新闻(){
     $$('#newstabs .pill').forEach(p=>p.onclick=()=>{LS.set('newscat',p.dataset.cat);render('新闻')});
+
+    /* ── 点击条目打开原文 ── */
+    $$('#newslist [data-link]').forEach(el=>el.onclick=()=>{window.open(el.dataset.link,'_blank')});
+
+    /* ── 抓取与渲染 ── */
+    const doFetch=(cat,silent)=>{
+      if(!silent)toast('正在获取'+cat+'实时新闻…');
+      const last=LS.get(NEWS_LAST,{})||{};
+      last[cat]=Date.now();LS.set(NEWS_LAST,last);
+      return newsFetch(cat).then(items=>{
+        if(current==='新闻')render('新闻',true);
+        if(!silent)toast('已更新今日'+cat+'资讯 ✅ '+items.length+' 条');
+      }).catch(()=>{
+        if(current==='新闻'&&!silent)toast('实时新闻获取失败，可稍后再试');
+      });
+    };
+
+    /* 手动刷新 */
+    on('#newsrefresh','onclick',()=>{
+      const cat=LS.get('newscat','科技');
+      const b=$('#newsrefresh');if(b){b.style.opacity=.5}
+      doFetch(cat,false).finally(()=>{if(b)b.style.opacity=1});
+    });
+
+    /* ── 进入模块按需自动刷新：无当日缓存或已过期，且 5 分钟内未尝试过 ── */
+    (function autoNews(){
+      const cat=LS.get('newscat','科技');
+      if(newsFresh(cat))return;                 /* 30 分钟内刚抓过 */
+      const last=LS.get(NEWS_LAST,{})||{};
+      if(Date.now()-(last[cat]||0)<5*60*1000)return;   /* 防抖 */
+      doFetch(cat,true);                        /* 静默后台刷新 */
+    })();
   },
  书籍(){
     $$('[data-bm]').forEach(p=>p.onclick=()=>{LS.set('bookm',p.dataset.bm);render('书籍')});
@@ -2458,6 +2575,9 @@ function rolloverDay(tk){
      手动填写的天气（wxManual）按用户意图保留。 */
   LS.set('weather',null);
   LS.set(WX_LAST,0);
+  /* 新闻：跨天后昨日资讯已过期，清空缓存让新闻模块重新抓取当日内容 */
+  LS.set('newsCache',null);
+  LS.set(NEWS_LAST,{});
   LS.set(DAY_KEY,tk);
 }
 
