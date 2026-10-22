@@ -467,6 +467,164 @@ const bmiTag=(b)=>{if(b<18.5)return{n:'偏瘦',c:'#9FC3EA'};if(b<24)return{n:'�
 /* 理想体重区间（BMI 18.5–24 对应） */
 const idealRange=(h)=>{const m=h/100;return[Math.round(18.5*m*m*10)/10,Math.round(24*m*m*10)/10]};
 
+/* ===== 央妈减肥法 / 《成人肥胖食养指南（2024年版）》 =====
+   国家卫健委发布，常被称作"央妈减肥法"。核心是可量化的几条：
+   ① 热量：在消耗基础上每天减 500–1000 kcal，或减 30%–50%；
+      限能量平衡膳食参考区间为 男 1200–1500、女 1000–1200 kcal/d
+   ② 供能比：碳水 50%–60%、脂肪 20%–30%、蛋白质 15%–20%
+   ③ 三餐供能比 3:4:3
+   ④ 晚餐 17:00–19:00，晚餐后不再进食（可饮水）
+   ⑤ 进餐顺序：蔬菜 → 肉类 → 主食
+   ⑥ 盐 <5g/d，烹调油 15–25g/d
+   ⑦ 减重速度 每月 2–4kg（每周约 0.5–1kg），半年减当前体重 5%–10%
+   ⑧ 饮水 1500–2000ml；睡眠约 7 小时；每周有氧 150–300 分钟 */
+const OFFICIAL={
+  kcal:{m:[1200,1500],f:[1000,1200]},       /* 限能量平衡膳食参考区间 */
+  cut:[500,1000],                           /* 每日能量缺口区间 */
+  pct:[30,50],                              /* 或按消耗的 30%–50% 减少 */
+  macro:{carb:[50,60],fat:[20,30],pro:[15,20]},
+  mealRatio:[3,4,3],                        /* 早:中:晚 */
+  dinner:[17,19],                           /* 晚餐时段 */
+  oil:[15,25],salt:5,
+  lossWeek:[0.5,1],lossMonth:[2,4],
+  water:[1500,2000],
+  aerobic:[150,300],resist:[2,3]
+};
+
+/* 七大地区四季食谱（节选自指南的示例菜单，热量按 1200/1400/1600 三档）
+   字段：b=早餐 l=中餐 d=晚餐 k=该组合参考热量 */
+const REGION={
+  hd:{n:'华东',e:'🌊',t:'主食以大米为主，湖鲜河鲜丰富，口味偏清淡',
+    s:{'春':[
+      {早:'燕麦芡实饭 · 白灼虾 · 凉拌马兰头',午:'二米饭 · 清蒸鲈鱼 · 蒜泥茼蒿',晚:'黑米饭 · 鲫鱼豆腐汤 · 清炒娃娃菜',k:1200},
+      {早:'菜肉小馄饨 · 无糖酸奶',午:'糙米饭 · 紫苏蒸香螺 · 香菇冬笋',晚:'青稞饭 · 盐水虾 · 香菇青菜',k:1400},
+      {早:'蒸南瓜 · 煮鸡蛋 · 燕麦牛奶',午:'糙米土豆饭 · 杏鲍菇牛柳 · 拌三丝',晚:'赤小豆玉米饭 · 清蒸大闸蟹 · 清炒杭白菜',k:1600}],
+     '夏':[
+      {早:'杂粮粥 · 水煮蛋 · 凉拌黄瓜',午:'燕麦芡实饭 · 仔姜炒牛肉 · 紫苏花蛤',晚:'鸡丝荞麦凉面 · 冬瓜汤',k:1200},
+      {早:'全麦面包 · 脱脂牛奶 · 圣女果',午:'二米饭 · 清蒸小黄鱼 · 蒜蓉空心菜',晚:'玉米 · 白灼基围虾 · 凉拌木耳',k:1400},
+      {早:'燕麦片 · 鸡蛋 · 蓝莓',午:'藜麦饭 · 番茄牛腩 · 清炒时蔬',晚:'荞麦面 · 虾仁沙拉 · 菌菇汤',k:1600}],
+     '秋':[
+      {早:'花卷 · 豆腐脑 · 茶叶蛋',午:'藜麦薏米饭 · 萝卜炖羊肉 · 醋溜辣白菜',晚:'黑米饭 · 蒜苔牛肉 · 菠菜蘑菇汤',k:1200},
+      {早:'冬菜虾仁小馄饨 · 无糖酸奶',午:'二米饭 · 紫苏蒸香螺 · 清炒娃娃菜',晚:'青稞饭 · 盐水虾 · 香菇青菜',k:1400},
+      {早:'蒸老南瓜 · 煮鸡蛋 · 燕麦牛奶',午:'糙米土豆饭 · 黄精虫草花炖鸡 · 蒜泥茼蒿',晚:'赤小豆玉米饭 · 清蒸大闸蟹 · 清炒杭白菜',k:1600}],
+     '冬':[
+      {早:'花卷 · 豆腐脑 · 茶叶蛋 · 脱脂牛奶',午:'藜麦薏米饭 · 萝卜炖羊肉 · 香菇冬笋',晚:'黑米饭 · 鸭血豆腐 · 菠菜蘑菇汤',k:1200},
+      {早:'冬菜虾仁小馄饨 · 无糖酸奶',午:'二米饭 · 紫苏蒸香螺 · 清炒娃娃菜',晚:'青稞饭 · 鲫鱼豆腐汤 · 香菇青菜',k:1400},
+      {早:'蒸老南瓜 · 煮鸡蛋 · 燕麦牛奶',午:'糙米土豆饭 · 杏鲍菇牛柳 · 蒜泥茼蒿',晚:'赤小豆玉米饭 · 清蒸大闸蟹 · 清炒杭白菜',k:1600}]}},
+
+  hn:{n:'华南',e:'🌴',t:'主食以大米为主，有喝汤习惯，口味清淡、部分嗜辣',
+    s:{'春':[
+      {早:'低脂牛奶 · 蒸芋头',午:'米饭 · 白灼虾 · 蒜蓉菜心',晚:'芋头蒸鸡块 · 冬瓜海带汤',k:1200},
+      {早:'鸡蛋炒粿条 · 豆浆',午:'米饭 · 清蒸鲈鱼 · 炒芥蓝',晚:'莱菔子桃仁杏仁骨头汤 · 凉拌木耳',k:1400},
+      {早:'瘦肉粥 · 水煮蛋 · 时令水果',午:'米饭 · 白切鸡(去皮) · 蒜蓉生菜',晚:'杂粮饭 · 番茄豆腐汤 · 清炒空心菜',k:1600}],
+     '夏':[
+      {早:'鸡蛋炒粿条 · 低脂牛奶',午:'米饭 · 冬瓜海带汤 · 白灼虾',晚:'芋头蒸鸡块 · 蒜蓉丝瓜',k:1200},
+      {早:'肠粉(少油) · 无糖豆浆',午:'米饭 · 清蒸鱼 · 蒜蓉菜心',晚:'杂粮饭 · 番茄豆腐汤 · 凉拌苦瓜',k:1400},
+      {早:'杂粮粥 · 水煮蛋 · 圣女果',午:'米饭 · 白切鸡(去皮) · 白灼芥蓝',晚:'红薯 · 虾仁豆腐汤 · 清炒时蔬',k:1600}],
+     '秋':[
+      {早:'切片面包 · 低脂牛奶',午:'米饭 · 芋头蒸鸡块 · 蒜蓉菜心',晚:'麻仁当归瘦肉汤 · 杂粮饭',k:1200},
+      {早:'瘦肉粥 · 水煮蛋',午:'米饭 · 清蒸海鱼 · 炒时蔬',晚:'杂粮饭 · 冬瓜薏米汤 · 白灼虾',k:1400},
+      {早:'蒸红薯 · 豆浆 · 鸡蛋',午:'米饭 · 白切鸡(去皮) · 蒜蓉生菜',晚:'杂粮饭 · 山药排骨汤 · 清炒芥蓝',k:1600}],
+     '冬':[
+      {早:'切片面包 · 低脂牛奶',午:'米饭 · 芋头蒸鸡块 · 蒜蓉菜心',晚:'麻仁当归瘦肉汤 · 蒸红薯',k:1200},
+      {早:'杂粮粥 · 水煮蛋 · 时令水果',午:'米饭 · 清蒸鲈鱼 · 炒芥蓝',晚:'杂粮饭 · 冬瓜海带汤 · 白灼虾',k:1400},
+      {早:'瘦肉粥 · 鸡蛋 · 豆浆',午:'米饭 · 白切鸡(去皮) · 蒜蓉生菜',晚:'杂粮饭 · 番茄豆腐汤 · 清炒时蔬',k:1600}]}},
+
+  hb:{n:'华北',e:'🏯',t:'喜面食及畜禽肉，蔬菜水产偏少，口味厚重偏咸',
+    s:{'春':[
+      {早:'南瓜窝头 · 蒸蛋羹 · 脱脂牛奶',午:'土豆蒸米饭 · 豆腐焖草鱼 · 虾皮炒菠菜',晚:'茯苓发糕 · 清炒小白菜 · 海米萝卜紫菜汤',k:1200},
+      {早:'桂花山药软饼 · 脱脂牛奶',午:'赤豆黄精紫米饭 · 彩椒炒鸡丁 · 白灼西兰花',晚:'西红柿鸡蛋面 · 白菜烧豆腐',k:1400},
+      {早:'杂粮粥 · 蒸铁棍山药 · 牛奶蒸蛋羹',午:'豆浆蒸杂粮饭 · 酸汤汆牛柳 · 蒜蓉炒蒿子秆',晚:'腰豆香芋紫米饭 · 醋溜白菜',k:1600}],
+     '夏':[
+      {早:'香葱鸡蛋软饼 · 胡萝卜鲍菇炒青笋',午:'芡实燕麦糙米饭 · 肉末豆腐蒸槐花',晚:'香菇蒸仔鸡 · 凉拌黄瓜',k:1200},
+      {早:'全麦馒头 · 豆浆 · 凉拌黄瓜',午:'杂粮饭 · 清蒸草鱼 · 蒜蓉菠菜',晚:'杂粮粥 · 清炒豆芽 · 蒸南瓜',k:1400},
+      {早:'玉米 · 鸡蛋 · 脱脂牛奶',午:'二米饭 · 青椒炒鸡丁 · 白灼西兰花',晚:'全麦面 · 番茄蛋汤 · 凉拌木耳',k:1600}],
+     '秋':[
+      {早:'南瓜窝头 · 蒸蛋羹 · 脱脂牛奶',午:'土豆蒸米饭 · 豆腐焖草鱼 · 虾皮炒菠菜',晚:'茯苓发糕 · 清炒小白菜 · 海米萝卜紫菜汤',k:1200},
+      {早:'小米粥 · 蒸山药 · 煮鸡蛋',午:'杂粮饭 · 清蒸鲈鱼 · 蒜蓉蒿子秆',晚:'全麦馒头 · 白菜豆腐汤 · 凉拌菠菜',k:1400},
+      {早:'杂粮粥 · 牛奶蒸蛋羹 · 香干炒菠菜',午:'豆浆蒸杂粮饭 · 酸汤汆牛柳 · 蒜蓉炒蒿子秆',晚:'腰豆香芋紫米饭 · 醋溜白菜',k:1600}],
+     '冬':[
+      {早:'虾皮炒菠菜 · 脱脂牛奶 · 蒸红薯',午:'豆腐焖草鱼 · 二米饭 · 清炒时蔬',晚:'海米萝卜紫菜汤 · 全麦馒头',k:1200},
+      {早:'南瓜窝头 · 蒸蛋羹 · 脱脂牛奶',午:'土豆蒸米饭 · 豆腐焖草鱼 · 虾皮炒菠菜',晚:'茯苓发糕 · 清炒小白菜 · 海米萝卜紫菜汤',k:1400},
+      {早:'杂粮粥 · 蒸铁棍山药 · 牛奶蒸蛋羹',午:'豆浆蒸杂粮饭 · 酸汤汆牛柳 · 蒜蓉炒蒿子秆',晚:'腰豆香芋紫米饭 · 醋溜白菜',k:1600}]}},
+
+  hz:{n:'华中',e:'🌾',t:'米面为主，蔬菜种类多、水果丰富，口味偏辣、油盐偏重',
+    s:{'春':[
+      {早:'蒸山药 · 牛奶 · 清炒芥菜',午:'杂粮米饭 · 家常南豆腐 · 彩椒大葱鸡胸肉',晚:'蒸山药 · 清蒸基围虾 · 凉拌竹笋',k:1200},
+      {早:'煮玉米 · 西红柿 · 水煮蛋',午:'杂粮米饭 · 芹菜炒香干 · 当归生姜羊肉汤',晚:'芋头红米饭 · 剁椒蒸鱼头 · 茼蒿菜',k:1400},
+      {早:'玉米面饼 · 肉末鸡蛋羹 · 无糖豆浆',午:'杂粮米饭 · 剁椒鱼块 · 芹菜炒牛柳',晚:'杂粮米饭 · 虾仁滑蛋 · 冬瓜海带汤',k:1600}],
+     '夏':[
+      {早:'牛奶枸杞燕麦片粥',午:'紫薯香菇干蒸去皮鸡 · 杂粮饭',晚:'冬瓜海带汤 · 凉拌黄瓜',k:1200},
+      {早:'蒸山药 · 清炒油麦菜',午:'杂粮米饭 · 清蒸鱼 · 蒜蓉丝瓜',晚:'小米粥 · 凉拌豆腐 · 清炒苋菜',k:1400},
+      {早:'玉米面饼 · 无糖豆浆 · 鸡蛋',午:'杂粮米饭 · 剁椒鱼块 · 酸菜金针菇',晚:'杂粮米饭 · 虾仁滑蛋 · 冬瓜海带汤',k:1600}],
+     '秋':[
+      {早:'蒸山药 · 牛奶 · 清炒芥菜',午:'杂粮米饭 · 家常南豆腐 · 彩椒大葱鸡胸肉',晚:'薏苡仁藕香汤 · 蒸山药',k:1200},
+      {早:'赤小豆薏米粥 · 清炒萝卜',午:'杂粮米饭 · 芹菜炒牛柳 · 清炒西兰花',晚:'芋头红米饭 · 剁椒蒸鱼头 · 茼蒿菜',k:1400},
+      {早:'玉米面饼 · 肉末鸡蛋羹 · 无糖豆浆',午:'杂粮米饭 · 剁椒鱼块 · 芹菜炒牛柳',晚:'杂粮米饭 · 虾仁滑蛋 · 冬瓜海带汤',k:1600}],
+     '冬':[
+      {早:'蒸山药 · 牛奶 · 清炒芥菜',午:'当归生姜羊肉汤 · 杂粮米饭 · 清炒萝卜',晚:'芋头红米饭 · 清蒸基围虾 · 凉拌竹笋',k:1200},
+      {早:'赤小豆薏米粥 · 芹菜炒香干',午:'杂粮米饭 · 剁椒蒸鱼头 · 清炒西兰花',晚:'蒸山药 · 凉拌竹笋 · 豆豉煮冬苋菜',k:1400},
+      {早:'玉米面饼 · 肉末鸡蛋羹 · 无糖豆浆',午:'杂粮米饭 · 剁椒鱼块 · 芹菜炒牛柳',晚:'杂粮米饭 · 虾仁滑蛋 · 冬瓜海带汤',k:1600}]}},
+
+  xn:{n:'西南',e:'🌶️',t:'大米糯米为主，禽畜肉多，口味重，喜辣麻酸',
+    s:{'春':[
+      {早:'蒸蛋羹 · 杂粮粥',午:'杂粮饭 · 蒜蓉金针菇 · 清炒时蔬',晚:'蔬菜汤 · 杂粮饭',k:1200},
+      {早:'荞麦面 · 水煮蛋',午:'杂粮饭 · 韭菜炒豆腐干 · 清炒莴笋',晚:'番茄蛋汤 · 凉拌黄瓜',k:1400},
+      {早:'杂粮煎饼 · 无糖豆浆',午:'杂粮米饭 · 葱油手撕鸡(去皮) · 蒜蓉油麦菜',晚:'杂粮饭 · 菌菇汤 · 清炒时蔬',k:1600}],
+     '夏':[
+      {早:'杂粮煎饼 · 豆浆',午:'杂粮饭 · 韭菜炒豆腐干 · 蒜蓉金针菇',晚:'杂粮米饭 · 葱油手撕鸡(去皮)',k:1200},
+      {早:'蒸蛋羹 · 玉米',午:'杂粮饭 · 清炒时蔬 · 凉拌木耳',晚:'番茄蛋汤 · 蒸红薯',k:1400},
+      {早:'荞麦面 · 水煮蛋 · 时令水果',午:'杂粮米饭 · 葱油手撕鸡 · 蒜蓉油麦菜',晚:'杂粮饭 · 菌菇汤 · 清炒时蔬',k:1600}],
+     '秋':[
+      {早:'蒸蛋羹 · 杂粮粥',午:'杂粮饭 · 蒜蓉金针菇 · 清炒时蔬',晚:'蔬菜汤 · 杂粮饭',k:1200},
+      {早:'荞麦面 · 水煮蛋',午:'杂粮饭 · 韭菜炒豆腐干 · 清炒莴笋',晚:'番茄蛋汤 · 凉拌黄瓜',k:1400},
+      {早:'杂粮煎饼 · 无糖豆浆',午:'杂粮米饭 · 葱油手撕鸡(去皮) · 蒜蓉油麦菜',晚:'杂粮饭 · 菌菇汤 · 清炒时蔬',k:1600}],
+     '冬':[
+      {早:'蒸蛋羹 · 杂粮粥',午:'杂粮饭 · 蒜蓉金针菇 · 清炒时蔬',晚:'蔬菜汤 · 蒸南瓜',k:1200},
+      {早:'荞麦面 · 水煮蛋',午:'杂粮饭 · 韭菜炒豆腐干 · 清炒莴笋',晚:'番茄蛋汤 · 凉拌黄瓜',k:1400},
+      {早:'杂粮煎饼 · 无糖豆浆',午:'杂粮米饭 · 葱油手撕鸡(去皮) · 蒜蓉油麦菜',晚:'杂粮饭 · 菌菇汤 · 清炒时蔬',k:1600}]}},
+
+  db:{n:'东北',e:'❄️',t:'米面、畜禽肉及奶类为主，炖菜多，肥厚实在、味重色浓',
+    s:{'春':[
+      {早:'杂粮煎饼 · 无糖豆浆',午:'二米饭 · 猪肉炖酸菜 · 清肺小炒',晚:'红枣发糕 · 藜麦沙拉',k:1200},
+      {早:'蒸山药 · 低脂牛奶 · 茶叶蛋',午:'二米饭 · 猪肉炖酸菜 · 芝麻菠菜',晚:'藜麦沙拉 · 红枣发糕',k:1400},
+      {早:'三明治 · 低脂牛奶 · 蔬菜沙拉',午:'玉米面馒头 · 清蒸鲈鱼 · 辣炒莴笋丝',晚:'玉米粥 · 蒜蓉西兰花 · 木耳拌干豆腐',k:1600}],
+     '夏':[
+      {早:'煮玉米 · 低脂牛奶',午:'沙葱猪肉水饺 · 凉拌黄瓜',晚:'莲子百合粥 · 清炒时蔬',k:1200},
+      {早:'杂粮煎饼 · 无糖豆浆',午:'二米饭 · 清蒸鱼 · 蒜蓉菠菜',晚:'打卤面 · 韭菜炒豆芽',k:1400},
+      {早:'三明治 · 低脂牛奶',午:'玉米面馒头 · 清蒸鲈鱼 · 辣炒莴笋丝',晚:'玉米粥 · 蒜蓉西兰花 · 木耳拌干豆腐',k:1600}],
+     '秋':[
+      {早:'杂粮煎饼 · 无糖豆浆',午:'二米饭 · 猪肉炖酸菜 · 清肺小炒',晚:'红枣发糕 · 藜麦沙拉',k:1200},
+      {早:'蒸山药 · 低脂牛奶 · 茶叶蛋',午:'二米饭 · 猪肉炖酸菜 · 芝麻菠菜',晚:'打卤面 · 韭菜炒豆芽',k:1400},
+      {早:'三明治 · 低脂牛奶 · 蔬菜沙拉',午:'玉米面馒头 · 清蒸鲈鱼 · 辣炒莴笋丝',晚:'玉米粥 · 蒜蓉西兰花 · 木耳拌干豆腐',k:1600}],
+     '冬':[
+      {早:'杂粮煎饼 · 无糖豆浆',午:'东北一锅出 · 青椒西葫芦',晚:'打卤面 · 韭菜炒豆芽',k:1200},
+      {早:'蒸山药 · 低脂牛奶 · 茶叶蛋',午:'二米饭 · 猪肉炖酸菜 · 芝麻菠菜',晚:'红枣发糕 · 藜麦沙拉',k:1400},
+      {早:'三明治 · 低脂牛奶 · 蔬菜沙拉',午:'玉米面馒头 · 清蒸鲈鱼 · 辣炒莴笋丝',晚:'玉米粥 · 蒜蓉西兰花 · 木耳拌干豆腐',k:1600}]}},
+
+  xb:{n:'西北',e:'🐑',t:'喜面食，小麦玉米杂粮为主，牛羊肉多，瓜果丰富、绿叶菜偏少',
+    s:{'春':[
+      {早:'红薯山药粥 · 煮鸡蛋',午:'杂粮饼 · 冬瓜炖排骨 · 芹菜炒香干',晚:'羊肉汤面 · 炒青菜',k:1200},
+      {早:'菜包子 · 煮鸡蛋 · 红薯山药粥',午:'杂粮饭 · 清蒸虾仁 · 凉拌三丝',晚:'肉丝面 · 醋熘白菜',k:1400},
+      {早:'杂粮馒头 · 虾皮紫菜鸡蛋羹',午:'羊肉泡馍 · 凉拌三丝 · 清炒豆芽',晚:'葱花饼 · 西红柿炖牛腩',k:1600}],
+     '夏':[
+      {早:'杂粮馒头 · 煮鸡蛋 · 大拌菜',午:'糙米饭 · 清蒸鱼 · 蒜蓉油麦菜',晚:'臊子面 · 凉拌黄瓜',k:1200},
+      {早:'红薯山药粥 · 豆腐脑',午:'杂粮饭 · 清蒸虾仁 · 凉拌三丝',晚:'羊肉汤面 · 炒青菜',k:1400},
+      {早:'杂粮馒头 · 虾皮紫菜鸡蛋羹 · 开心果',午:'羊肉泡馍 · 凉拌三丝 · 清炒豆芽',晚:'葱花饼 · 西红柿炖牛腩',k:1600}],
+     '秋':[
+      {早:'锅盔辣子馍 · 煮鸡蛋 · 豆腐脑',午:'杂粮饼 · 冬瓜炖排骨 · 芹菜炒香干',晚:'羊肉汤面 · 炒青菜',k:1200},
+      {早:'菜包子 · 煮鸡蛋 · 红薯山药粥',午:'杂粮饭 · 清蒸虾仁 · 羊肉汤',晚:'肉丝面 · 醋熘白菜',k:1400},
+      {早:'杂粮馒头 · 虾皮紫菜鸡蛋羹',午:'羊肉泡馍 · 凉拌三丝 · 清炒豆芽',晚:'葱花饼 · 西红柿炖牛腩',k:1600}],
+     '冬':[
+      {早:'红薯山药粥 · 煮鸡蛋',午:'羊肉汤 · 杂粮饼 · 冬瓜',晚:'肉丝面 · 炒青菜',k:1200},
+      {早:'锅盔辣子馍 · 煮鸡蛋 · 豆腐脑',午:'杂粮饼 · 冬瓜炖排骨 · 芹菜炒香干',晚:'羊肉汤面 · 炒青菜',k:1400},
+      {早:'杂粮馒头 · 虾皮紫菜鸡蛋羹 · 开心果',午:'羊肉泡馍 · 凉拌三丝 · 清炒豆芽',晚:'葱花饼 · 西红柿炖牛腩',k:1600}]}}
+};
+const REGION_KEYS=['hd','hn','hb','hz','xn','db','xb'];
+/* 由月份推节气季节 */
+const seasonOf=(m)=>(m>=3&&m<=5)?'春':(m>=6&&m<=8)?'夏':(m>=9&&m<=11)?'秋':'冬';
+
+
 /* ===== 英语每日轮换 =====
    目的：英语资讯与口语内容每天自动换一批，避免长期只盯着同几条。
    策略（环形轮转，稳定且刷新感最强）：
@@ -1372,8 +1530,10 @@ R.饮食=()=>{
   const total=kcalTotal(log);
 
   /* ── 体质档案 ── */
-  const P=LS.get('body',{sex:'f',height:165,weight:60,age:28,act:'light',goal:'lose'});
-  const filled=P.height>0&&P.weight>0&&P.age>0;
+  const PB=LS.get('body',null);
+  const filled=!!PB&&PB.height>0&&PB.weight>0&&PB.age>0;
+  /* 未填档案时用一组中性默认值占位，保证页面结构与文案都正常，但所有结果标记为"待填写" */
+  const P=filled?PB:{sex:'f',height:165,weight:60,age:28,act:'light',goal:'lose'};
   const bmr=filled?calcBMR(P.sex,P.weight,P.height,P.age):0;
   const act=ACT[P.act]||ACT.light;
   const tdee=Math.round(bmr*act.f);
@@ -1381,15 +1541,92 @@ R.饮食=()=>{
   const bt=bmiTag(bmi);
   const [ilo,ihi]=idealRange(P.height||165);
 
-  /* 目标方向：减脂 / 保持 / 增肌 */
-  const adjust=P.goal==='lose'?-0.20:(P.goal==='gain'?0.12:0);
-  const target=Math.round(tdee*(1+adjust)/10)*10;
+  /* 目标方向：减脂 / 保持 / 增肌
+     —— 减脂目标改按《成人肥胖食养指南》计算：
+        ① 先按消耗的 30%–50% 估缺口，再夹在 500–1000 kcal 区间
+        ② 同时夹在性别限能量区间（男 1200–1500 / 女 1000–1200）
+        ③ 不因公式偏差把目标压到基础代谢以下 */
+  const sexKey=P.sex==='m'?'m':'f';
+  const kcalRange=OFFICIAL.kcal[sexKey];
+  let adjust,target,clampedHigher=false,floorNote='';
+  if(P.goal==='lose'){
+    const byPct=Math.round(tdee*(1-OFFICIAL.pct[0]/100)/10)*10;
+    const byCut=tdee-OFFICIAL.cut[1];
+    target=Math.max(byPct,byCut);                      /* 取较保守的一方：缺口不超 50% 也不超 1000 */
+    target=Math.min(target,tdee-OFFICIAL.cut[0]);      /* 再确保缺口至少 500 */
+    /* 指南的「限能量平衡膳食」区间并非硬性上限：
+       体力活动大的人消耗高，1500 kcal 仍能形成充足缺口，不必强行压到这里。
+       因此只把它当参考下限，超出上限时给出提示而不截断。 */
+    if(target<OFFICIAL.kcal.f[0]){target=OFFICIAL.kcal.f[0];floorNote='low'}
+    /* 小个子 / 低消耗人群：限能量下限可能低于基础代谢，
+       此时抬高到 BMR（宁可缺口小一点，也不吃不够） */
+    if(target<bmr){target=bmr;clampedHigher=true}
+    target=Math.round(target/10)*10;
+    if(target>kcalRange[1])floorNote='high';
+    adjust=target/tdee-1;
+  }else{
+    adjust=P.goal==='gain'?0.12:0;
+    target=Math.round(tdee*(1+adjust)/10)*10;
+  }
   const deficit=tdee-target;                    /* 热量缺口（正数为缺口） */
   const pct=Math.min(100,Math.round(total/Math.max(1,target)*100));
   const over=total-target;
   /* 缺口 → 预期减重（1kg 脂肪 ≈ 7700 kcal） */
   const weekLoss=deficit>0?Math.round(deficit*7/7700*100)/100:0;
+  const monthLoss=Math.round(weekLoss*4.3*10)/10;
   const dayLeft=Math.max(0,target-total);       /* 今日还可摄入 */
+
+  /* 官方区间校验：本周减重速度是否落在 0.5–1kg（每月 2–4kg）
+     小个子被 BMR 兜底抬高时，缺口天然偏小，这属于合理区间，不算"偏慢" */
+  const lossInRange=(weekLoss>=OFFICIAL.lossWeek[0]&&weekLoss<=OFFICIAL.lossWeek[1])||clampedHigher;
+  const lossTag=!filled?'':(deficit<=0?'无缺口'
+    :(clampedHigher?'已按基础代谢保底，缺口 '+deficit+' kcal ✓'
+     :(weekLoss<OFFICIAL.lossWeek[0]?'偏慢，可略减 100–200 kcal'
+      :(weekLoss>OFFICIAL.lossWeek[1]?'偏快，建议放宽 200 kcal'
+       :'理想速度 ✓'))));
+
+  /* ── 三大营养素（按官方供能比中值：碳水55% / 脂肪25% / 蛋白20%）──
+     蛋白质同时参考体重 1.2–1.6g/kg，取两者较大值，避免掉肌肉 */
+  const proByPct=Math.round(target*0.20/4);
+  const proByKg=Math.round(P.weight*1.4);
+  const protein=Math.max(proByPct,proByKg);
+  const carbK=Math.round(target*0.55/4);
+  const fatK=Math.round(target*0.25/9);
+  const proPct=Math.round(protein*4/target*100);
+  const carbPct=Math.round(carbK*4/target*100);
+  const fatPct=Math.round(fatK*9/target*100);
+
+  /* ── 三餐供能比 3:4:3 ── */
+  const RATIO=[3,4,3];
+  const quotaOf=(i)=>Math.round(target*RATIO[i]/10/10)*10;
+
+  /* ── 今日地区与季节食谱 ── */
+  const regKey=(P.region&&REGION[P.region])?P.region:'hd';
+  const reg=REGION[regKey];
+  const season=seasonOf(new Date().getMonth()+1);
+  const seasonMenu=reg.s[season]||reg.s['春'];
+  /* 选最贴近目标热量的一档（1200/1400/1600） */
+  const menuIdx=(()=>{
+    let bi=0,bd=1e9;
+    seasonMenu.forEach((m,i)=>{const d=Math.abs(m.k-target);if(d<bd){bd=d;bi=i}});
+    return bi;
+  })();
+  const menu=seasonMenu[menuIdx];
+  /* 主食份量：指南里碳水主食一般 50g 生米上下，按目标热量同比缩放 */
+  const stapleG=Math.round(50*target/1400/5)*5||50;
+
+  /* ── 习惯打卡（按天存储）── */
+  const hab=dayDone('habit');
+  const hk=hab.k;
+  const water=hk.water||0;
+  const waterOK=water>=OFFICIAL.water[0];
+  const dinnerTime=hk.dinner||'';
+  const dinnerOK=(()=>{
+    if(!dinnerTime)return false;
+    const h=parseInt(String(dinnerTime).split(':')[0],10);
+    return h>=OFFICIAL.dinner[0]&&h<OFFICIAL.dinner[1];
+  })();
+  const orderOK=!!hk.order;
 
   /* ── 后续餐食推荐引擎 ──
      1) 按当前时间判断还剩哪几餐
@@ -1408,11 +1645,12 @@ R.饮食=()=>{
   const passed=MEALPLAN.filter(x=>x.m!=='加餐'&&nowH>=x.to&&mealSum(log,x.m)>0).map(x=>x.m);
   /* 待安排：还没到时段 或 到了但没记录 */
   const todo=MEALPLAN.filter(x=>x.m!=='加餐'&&!passed.includes(x.m)&&(nowH<x.to));
-  /* 加餐仅在剩余额度富余时提示 */
+  /* 剩余额度按官方 3:4:3 的比例分摊到未完成的餐次 */
+  const ratioOf=m=>m==='早餐'?RATIO[0]:(m==='午餐'?RATIO[1]:RATIO[2]);
   const used=new Set();                                  /* 跨餐次去重，保证推荐多样 */
   const plan=todo.map(x=>{
-    const tw=todo.reduce((a,b)=>a+b.w,0)||1;
-    let quota=Math.round(remaining*x.w/tw/10)*10;
+    const tw=todo.reduce((a,b)=>a+ratioOf(b.m),0)||1;
+    let quota=Math.round(remaining*ratioOf(x.m)/tw/10)*10;
     quota=Math.max(80,quota);
     /* 晚餐/加餐优先轻食，午餐/早餐优先正餐与轻食 */
     const prefer=x.m==='晚餐'?['轻食','正餐']:['正餐','轻食'];
@@ -1427,12 +1665,8 @@ R.饮食=()=>{
   /* 是否建议加餐：剩余额度够且距下一餐还久 */
   const snackOK=remaining>200&&nowH>=14&&nowH<18;
 
-  /* ── 个性化推荐 ── */
-  const protein=Math.round(P.weight*1.8);
-  const carbK=Math.round(target*0.4/4);
-  const fatK=Math.round(target*0.25/9);
-  const activeDay=ACT[P.act].f>=1.55;
-  const recEx=activeDay
+  /* ── 个性化推荐（宏量营养素已按央妈指南计算，此处只给运动方案） ── */
+  const recEx=(ACT[P.act].f>=1.55)
    ?{many:'4–5 次 / 周',plan:'有氧 30 分钟 + 力量 20 分钟，穿插 1 天恢复日',ex:'全身燃脂 20 分钟 / HIIT 跳绳 12 分钟'}
    :{many:'3 次 / 周',plan:'从低强度起步：快走或慢跑 25 分钟 + 基础力量 15 分钟',ex:'腹部塑形 15 分钟 / 拉伸放松 10 分钟'};
   const advice=!filled
@@ -1445,28 +1679,31 @@ R.饮食=()=>{
       ?'增肌期需要热量盈余，建议优先保证蛋白质与力量训练，每周增重 0.25kg 为佳，避免脂肪堆积。'
       :'保持期摄入与消耗持平，重点放在蛋白质充足与规律运动，维持体成分稳定。'));
 
-  const meal=(label,key,acc,idx)=>{
-    const arr=D.饮食[key];
-    const mIdx=LS.get('meal_'+key,0)||0;
-    const item=arr[mIdx]||arr[0];
-    /* 去重：同名同热量的该餐次条目视为已记录 */
-    const has=log.items.some(i=>i.meal===key&&i.n===item.n);
-    const sum=mealSum(log,key);
+  /* ── 官方食谱三餐卡：餐次供能比例 + 地区/季节菜单 + 一键记入 ── */
+  const MEAL_SLOT=['早','午','晚'];
+  const mealCard=(label,key,i,acc)=>{
+    const mIdx=LS.get('menu_'+key,0)||0;
+    const cur=seasonMenu[mIdx]||seasonMenu[0];
+    const dish=cur[MEAL_SLOT[i]]||'';
+    const quota=quotaOf(i);
+    const has=log.items.some(x=>x.meal===key&&x.n===dish);
     return `<div class="card" style="--acc:${acc.acc};--accs:${acc.accs}">
-      <h2>${label} <span class="badge" style="background:${acc.tg}">推荐 ${item.k} kcal${sum?' · 已记 '+sum:''}</span></h2>
+      <h2>${label} <span class="badge" style="background:${acc.tg}">建议 ${quota} kcal</span></h2>
+      <div class="mini" style="margin:-2px 0 7px">${esc(reg.e+' '+reg.n+'·'+season)} · 占全天 ${RATIO[i]*10}%</div>
       <div class="item" style="background:${acc.bgc}">
-        <div class="t">${esc(item.n)}</div>
-        <div class="d">${esc(item.d)}</div>
-        <div class="m"><span class="tag" style="background:${acc.tg}">${esc(item.p)}</span></div>
+        <div class="t" style="font-size:13px;line-height:1.6">${esc(dish)}</div>
+        <div class="m"><span class="tag" style="background:${acc.tg}">${esc(`${stapleG}g 主食 · 蛋白约 ${Math.round(protein/3)}g`)}</span></div>
       </div>
       <div style="display:flex;gap:6px;margin-top:9px">
-        <button class="btn sm" data-meal="${key}">🔄 换一份</button>
-        <button class="btn sm ${has?'pri':''}" style="--acc:${acc.acc};--accs:${acc.accs}" data-add="${key}|${esc(item.n)}|${item.k}">${has?'✅ 已记录':'＋ 记入今日'}</button>
+        <button class="btn sm" data-menu="${key}">🔄 换一份</button>
+        <button class="btn sm ${has?'pri':''}" style="--acc:${acc.acc};--accs:${acc.accs}" data-add="${key}|${esc(dish)}|${quota}">${has?'✅ 已记录':'＋ 记入今日'}</button>
       </div>
     </div>`};
 
   /* 供自动化测试读取计算结果（不参与渲染） */
-  window.__dietDebug={remaining,plan,todo:todo.map(x=>x.m),snackOK};
+  window.__dietDebug={remaining,plan,todo:todo.map(x=>x.m),snackOK,target,deficit,protein,carbK,fatK,
+    quota:[quotaOf(0),quotaOf(1),quotaOf(2)],regKey,season,menuIdx,stapleG,water,dinnerOK,orderOK,lossInRange,
+    bmr,tdee,monthLoss,clampedHigher,waterOK,lossTag,floorNote,filled};
   return `
   <div class="head"><h1>🥗 每日减脂饮食</h1><p>身高体重记录 · 热量缺口计算 · 个性化推荐</p></div>
 
@@ -1503,12 +1740,15 @@ R.饮食=()=>{
   <!-- 热量缺口 -->
   <div class="card tint" style="--acc:${PASTEL[0].acc};--bgc:${PASTEL[0].bgc}">
     <h2>🔥 今日热量缺口 <span class="badge">${filled?(deficit>0?'缺口 '+deficit:'盈余 '+(-deficit))+' kcal':'待填写档案'}</span></h2>
-    <div class="kv"><b style="color:${PASTEL[0].acc}" id="kcalnum">${total}</b><span>/ 目标 ${target} kcal</span></div>
+    <div class="kv"><b style="color:${PASTEL[0].acc}" id="kcalnum">${total}</b><span>/ 目标 ${filled?target:'—'} kcal</span></div>
     <div class="bar"><i style="--acc:${PASTEL[0].acc};width:${pct}%" id="kcalbar"></i></div>
     <div class="grid2" style="gap:6px;margin-top:8px">
-      <div class="stat" style="background:#fff"><b style="color:${deficit>0?PASTEL[0].acc:'#9A9A9A'}">${deficit>0?deficit:0}</b><span>每日热量缺口</span></div>
-      <div class="stat" style="background:#fff"><b style="color:${PASTEL[6].acc}">${weekLoss}</b><span>预计周减重 kg</span></div>
+      <div class="stat" style="background:#fff"><b style="color:${deficit>0?PASTEL[0].acc:'#9A9A9A'}">${filled?(deficit>0?deficit:0):'—'}</b><span>每日热量缺口</span></div>
+      <div class="stat" style="background:#fff"><b style="color:${PASTEL[6].acc}">${filled?weekLoss:'—'}</b><span>预计周减重 kg</span></div>
     </div>
+    ${filled&&lossTag?`<div class="mini" style="margin-top:7px">📏 减重速度：<b style="color:${lossInRange?PASTEL[0].acc:PASTEL[1].acc}">${lossTag}</b>　｜　约 ${monthLoss} kg / 月（指南建议 2–4 kg）</div>`:''}
+    ${filled&&clampedHigher?`<div class="mini" style="margin-top:4px;color:#9A9A9A">你的基础代谢约 ${bmr} kcal，已按此保底，不再往下压。想吃得更少不如多动一点。</div>`:''}
+    ${filled&&floorNote==='high'?`<div class="mini" style="margin-top:4px;color:#9A9A9A">你消耗较高（${tdee} kcal），指南的 ${OFFICIAL.kcal.f[0]}–${OFFICIAL.kcal.m[1]} kcal 属"低能量膳食"档，不必硬压到那里；按缺口 ${deficit} kcal 执行即可。</div>`:''}
     <div class="hr"></div>
     <div class="mini">${!filled?'填写上方体质档案后，这里会自动算出你的每日热量缺口与预期减重速度。'
       :(total===0?'今日尚未记录饮食。建议在三餐中选择搭配，凑够 '+target+' kcal 左右即可。'
@@ -1599,19 +1839,101 @@ R.饮食=()=>{
       <span style="color:#9A9A9A">可选用：${recEx.ex}（见「运动塑形」模块）</span></div>`:''}
   </div>
 
-  ${meal('🌅 早餐','早餐',PASTEL[2],0)}
-  ${meal('🌞 午餐','午餐',PASTEL[0],1)}
-  ${meal('🌙 晚餐','晚餐',PASTEL[4],2)}
+  ${mealCard('🌅 早餐','早餐',0,PASTEL[2])}
+  ${mealCard('🌞 午餐','午餐',1,PASTEL[0])}
+  ${mealCard('🌙 晚餐','晚餐',2,PASTEL[4])}
+
+  <!-- 三餐供能比 3:4:3 -->
+  <div class="card tint" style="--acc:${PASTEL[1].acc};--bgc:${PASTEL[1].bgc}">
+    <h2>🍱 三餐供能比 3:4:3 <span class="badge">${filled?'目标 '+target+' kcal':'待填写档案'}</span></h2>
+    <div class="mini" style="margin-bottom:7px">早 30% · 午 40% · 晚 30%。下表左侧是"今日已吃"，右侧是"这一餐该吃到多少"。</div>
+    ${filled?'':'<div class="mini" style="margin-bottom:7px;color:#9A9A9A">填写体质档案后，这里会按你的目标热量换算每餐建议份量。</div>'}
+    ${['早餐','午餐','晚餐'].map((m,i)=>{
+      const sum=mealSum(log,m);
+      const q=Math.round(target*RATIO[i]/10/10)*10;
+      const raw=Math.round(sum/Math.max(1,q)*100);   /* 真实百分比，不截断，超量才能判出"偏多" */
+      const w2=Math.min(100,raw);
+      const state=sum===0?'未记录':(raw<60?'偏少':(raw>125?'偏多':'达标'));
+      const col=sum===0?'#BDBDBD':(raw<60?PASTEL[2].acc:(raw>125?PASTEL[1].acc:PASTEL[0].acc));
+      return `<div style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:12px;padding:8px 10px;margin-bottom:6px">
+        <span style="flex:0 0 40px;font-size:11.5px;color:#6B6B6B">${m}</span>
+        <div style="flex:1 1 auto;min-width:0">
+          <div style="height:5px;border-radius:3px;background:#EDEDED;overflow:hidden">
+            <i style="display:block;height:100%;width:${w2}%;background:${col};border-radius:3px"></i>
+          </div>
+        </div>
+        <span style="flex:0 0 auto;font-size:11.5px;font-weight:700;color:${col}">${sum}</span>
+        <span style="flex:0 0 auto;font-size:10.5px;color:#9A9A9A">/ ${filled?q:'—'}</span>
+        <span style="flex:0 0 34px;text-align:right;font-size:10px;color:${col}">${state}</span>
+      </div>`}).join('')}
+  </div>
+
+  <!-- 央妈减肥法 · 习惯打卡 -->
+  <div class="card tint" style="--acc:${PASTEL[9].acc};--bgc:${PASTEL[9].bgc}">
+    <h2>✅ 今日习惯打卡 <span class="badge">${(waterOK?1:0)+(dinnerOK?1:0)+(orderOK?1:0)} / 3</span></h2>
+    <div class="mini" style="margin-bottom:8px">这三条是《成人肥胖食养指南》里最容易落地的部分，做到比算准更重要。</div>
+
+    <!-- 饮水 -->
+    <div style="background:#fff;border-radius:12px;padding:9px 10px;margin-bottom:7px">
+      <div style="display:flex;align-items:baseline;gap:6px">
+        <b style="font-size:12.5px">💧 饮水</b>
+        <span class="badge" style="margin-left:auto;background:${waterOK?PASTEL[0].tg:'#F1F1F1'};color:${waterOK?PASTEL[0].acc:'#8A8A8A'}">${water} / 1500–2000 ml</span>
+      </div>
+      <div style="height:5px;border-radius:3px;background:#EDEDED;margin:7px 0;overflow:hidden">
+        <i style="display:block;height:100%;width:${Math.min(100,Math.round(water/2000*100))}%;background:${waterOK?PASTEL[0].acc:'#CFCFCF'};border-radius:3px"></i>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${[250,500].map(v=>`<button class="btn sm" style="flex:1 1 0;padding:5px 0;font-size:11px" data-water="${v}">＋${v}ml</button>`).join('')}
+        <button class="btn sm" style="flex:1 1 0;padding:5px 0;font-size:11px" data-water="-250">－250</button>
+        <button class="btn sm" style="flex:0 0 auto;padding:5px 9px;font-size:11px" data-water="0">清零</button>
+      </div>
+    </div>
+
+    <!-- 晚餐时间 -->
+    <div style="background:#fff;border-radius:12px;padding:9px 10px;margin-bottom:7px">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+        <b style="font-size:12.5px">🕕 晚餐时间</b>
+        <span class="badge" style="margin-left:auto;background:${dinnerOK?PASTEL[0].tg:'#F1F1F1'};color:${dinnerOK?PASTEL[0].acc:'#8A8A8A'}">${dinnerOK?'在 17–19 点 ✓':'建议 17–19 点'}</span>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <input class="in" id="dinnertime" type="time" value="${esc(dinnerTime||'')}" style="flex:1 1 auto;min-width:0">
+        <button class="btn sm" id="dinnerset" style="flex:0 0 auto">记录</button>
+      </div>
+      <div class="mini" style="margin-top:5px">晚餐后尽量不再进食（可饮水），睡前 3 小时吃完。</div>
+    </div>
+
+    <!-- 进餐顺序 -->
+    <div style="background:#fff;border-radius:12px;padding:9px 10px">
+      <div style="display:flex;align-items:center;gap:6px">
+        <b style="font-size:12.5px">🥢 进餐顺序</b>
+        <button class="btn sm ${orderOK?'pri':''}" style="margin-left:auto;flex:0 0 auto;padding:5px 10px;font-size:11px;--acc:${PASTEL[0].acc};--accs:${PASTEL[0].accs}" id="orderbtn">${orderOK?'✅ 已做到':'标记做到'}</button>
+      </div>
+      <div class="mini" style="margin-top:5px">先吃蔬菜 → 再吃肉蛋 → 最后主食，同样饭菜能少吃不少。</div>
+    </div>
+  </div>
+
+  <!-- 地区口味 -->
+  <div class="card" style="--acc:${PASTEL[5].acc}">
+    <h2>🗺 我的地区口味 <span class="badge">${esc(reg.n)}</span></h2>
+    <div class="mini" style="margin-bottom:7px">指南为七大地区分别设计了四季食谱。选你所在地区，推荐会更贴近日常饮食。</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      ${REGION_KEYS.map(k=>`<button class="btn sm" data-region="${k}" style="${P.region===k?'background:'+PASTEL[5].acc+';color:#fff;border-color:transparent':''}">${REGION[k].e} ${REGION[k].n}</button>`).join('')}
+    </div>
+    <div class="mini" style="margin-top:8px;line-height:1.7">📍 ${esc(reg.t)}。<br>当前按 <b>${esc(reg.e+' '+reg.n+'·'+season)}</b> 出菜单，参考热量 ${menu.k} kcal（你的目标是 ${target} kcal）。</div>
+  </div>
 
   <div class="card">
-    <h2>减脂饮食核心原则</h2>
-    <div class="mini">
-      • 蛋白质每餐必备（鸡蛋/鸡胸/鱼虾/豆制品），保住肌肉基础代谢<br>
-      • 主食替换为粗杂粮，控制总量在一个拳头大小<br>
-      • 蔬菜占餐盘一半，少油少盐，烹饪以蒸煮炖为主<br>
-      • 每天饮水 1.5–2L，饭前半小时一杯水可降低进食量<br>
-      • 不追求快速掉秤，每周 0.5–1kg 的节奏最不容易反弹
+    <h2>📖 央妈减肥法 · 核心原则</h2>
+    <div class="mini" style="line-height:1.9">
+      <b>① 控总量</b>：在消耗基础上每天减 500–1000 kcal，或减少 30%–50%；限能量参考区间 男 1200–1500、女 1000–1200 kcal<br>
+      <b>② 调结构</b>：碳水 50%–60%、脂肪 20%–30%、蛋白质 15%–20%；三餐供能比 3:4:3<br>
+      <b>③ 换食材</b>：主食全谷物为主、粗细搭配；优先瘦肉、去皮鸡胸、鱼虾；奶类选低脂或脱脂<br>
+      <b>④ 改习惯</b>：晚餐 17–19 点、饭后不再进食；蔬菜→肉类→主食；细嚼慢咽<br>
+      <b>⑤ 控油盐</b>：全天烹调油 15–25g，盐 <5g；少吃高能量密度食物，严格限酒<br>
+      <b>⑥ 动与睡</b>：每周有氧 150–300 分钟 + 抗阻 2–3 次；睡眠约 7 小时，23 点前入睡<br>
+      <b>⑦ 慢一点</b>：每月减 2–4kg（每周 0.5–1kg），半年减当前体重 5%–10% 最不反弹
     </div>
+    <div class="mini" style="margin-top:8px;color:#9A9A9A">依据：国家卫健委《成人肥胖食养指南（2024 年版）》。本模块为生活方式参考，孕期、哺乳期、慢病及用药人群请遵医嘱。</div>
   </div>`;
 };
 
@@ -2204,11 +2526,56 @@ const EV={
     });
   },
  饮食(){
-    /* 餐次换一份 */
+    /* 餐次换一份：在"当前地区+当前季节"的三档菜单里轮换 */
+    $$('[data-menu]').forEach(b=>b.onclick=()=>{
+      const k=b.dataset.menu;
+      const cur=LS.get('menu_'+k,0)||0;
+      LS.set('menu_'+k,(cur+1)%3);render('饮食',true);
+      toast('换了一份 🍽️');
+    });
+    /* 旧版按钮（保留兼容） */
     $$('[data-meal]').forEach(b=>b.onclick=()=>{
       const k=b.dataset.meal;const cur=LS.get('meal_'+k,0)||0;
       const arr=D.饮食[k];const nx=(cur+1)%arr.length;LS.set('meal_'+k,nx);render('饮食');
       toast('换了一份 🍽️');
+    });
+
+    /* ── 习惯打卡：饮水 ── */
+    $$('[data-water]').forEach(b=>b.onclick=()=>{
+      const v=+b.dataset.water;
+      const h=dayDone('habit');
+      if(v===0)h.k.water=0;
+      else h.k.water=Math.max(0,Math.min(8000,(h.k.water||0)+v));
+      dayDoneSave('habit',h);
+      render('饮食',true);
+    });
+
+    /* ── 习惯打卡：晚餐时间 ── */
+    on('#dinnerset','onclick',()=>{
+      const el=$('#dinnertime');if(!el)return;
+      const v=el.value;
+      if(!v)return toast('请选择晚餐时间');
+      const h=dayDone('habit');h.k.dinner=v;dayDoneSave('habit',h);
+      render('饮食',true);
+      const hr=parseInt(v.split(':')[0],10);
+      toast(hr>=17&&hr<19?'晚餐时间很棒 ✅':'已记录，建议 17–19 点之间吃完');
+    });
+
+    /* ── 习惯打卡：进餐顺序 ── */
+    on('#orderbtn','onclick',()=>{
+      const h=dayDone('habit');
+      h.k.order=!h.k.order;dayDoneSave('habit',h);
+      render('饮食',true);
+      toast(h.k.order?'进餐顺序打卡成功 ✅':'已取消');
+    });
+
+    /* ── 地区切换 ── */
+    $$('[data-region]').forEach(b=>b.onclick=()=>{
+      const P=LS.get('body',null)||{sex:'f',height:165,weight:60,age:28,act:'light',goal:'lose'};
+      P.region=b.dataset.region;LS.set('body',P);
+      LS.set('menu_早餐',0);LS.set('menu_午餐',0);LS.set('menu_晚餐',0);
+      render('饮食',true);
+      toast('已切换为「'+REGION[b.dataset.region].n+'」口味');
     });
 
     /* 把推荐食谱记入今日（点击可取消），格式 meal|name|kcal */
@@ -2281,7 +2648,7 @@ const EV={
 
     /* ── 体质档案：目标切换（即时生效） ── */
     $$('[data-goal]').forEach(b=>b.onclick=()=>{
-      const P=LS.get('body',{sex:'f',height:165,weight:60,age:28,act:'light',goal:'lose'});
+      const P=LS.get('body',null)||{sex:'f',height:165,weight:60,age:28,act:'light',goal:'lose'};
       P.goal=b.dataset.goal;LS.set('body',P);render('饮食',true);
       toast('目标已切换为「'+b.textContent.trim()+'」');
     });
@@ -2293,8 +2660,8 @@ const EV={
       if(!(h>=80&&h<=250))return toast('身高请输入 80–250 cm');
       if(!(w>=20&&w<=300))return toast('体重请输入 20–300 kg');
       if(!(a>=10&&a<=100))return toast('年龄请输入 10–100 岁');
-      const P=LS.get('body',{goal:'lose'});
-      LS.set('body',{sex,height:h,weight:Math.round(w*10)/10,age:a,act:actv,goal:P.goal||'lose'});
+      const P=LS.get('body',null)||{goal:'lose'};
+      LS.set('body',{sex,height:h,weight:Math.round(w*10)/10,age:a,act:actv,goal:P.goal||'lose',region:P.region||'hd'});
       render('饮食',true);toast('已保存，热量缺口已重新计算 ✅');
     });
   },
@@ -2578,6 +2945,9 @@ function rolloverDay(tk){
   /* 新闻：跨天后昨日资讯已过期，清空缓存让新闻模块重新抓取当日内容 */
   LS.set('newsCache',null);
   LS.set(NEWS_LAST,{});
+  /* 饮食习惯打卡（饮水 / 晚餐时间 / 进餐顺序）：按日归零 */
+  const hb=LS.get('habit',null);
+  if(hb&&hb.d!==tk)LS.set('habit',{d:tk,k:{}});
   LS.set(DAY_KEY,tk);
 }
 
