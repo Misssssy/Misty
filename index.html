@@ -1,0 +1,3082 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#FAFAFA">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="format-detection" content="telephone=no,email=no,address=no">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext y='50' font-size='52'%3E%F0%9F%92%A1%3C/text%3E%3C/svg%3E">
+<title>我的个人工作台</title>
+<style>
+:root{
+  --bg:#FAFAFA;
+  --nav:#F5F5F5;
+  --ink:#3A3A3A;
+  --ink2:#6B6B6B;
+  --ink3:#9A9A9A;
+  --line:#ECECEC;
+  --navw:15vw;
+  --r:16px;
+  --sh:0 2px 10px rgba(0,0,0,.04);
+  --ease:cubic-bezier(.22,.61,.36,1);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{
+  width:100%;
+  max-width:100vw;
+  overflow-x:hidden;
+  overscroll-behavior-x:none;
+}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  background:var(--bg);
+  color:var(--ink);
+  font-size:15px;
+  line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeSpeed;
+  position:fixed;
+  inset:0;
+}
+button,input,textarea,select{font-family:inherit;font-size:inherit;color:inherit;border:none;outline:none;background:none}
+img{max-width:100%;display:block}
+
+/* ===== 布局骨架：左15%固定导航 + 右85%内容 ===== */
+#app{
+  display:flex;
+  width:100%;
+  height:100vh;
+  height:100dvh;
+  overflow:hidden;
+}
+
+/* ---- 左侧导航 ---- */
+#nav{
+  width:var(--navw);
+  min-width:var(--navw);
+  max-width:var(--navw);
+  height:100%;
+  background:var(--nav);
+  border-right:1px solid var(--line);
+  overflow-y:auto;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+  padding:calc(6px + env(safe-area-inset-top)) 0 calc(10px + env(safe-area-inset-bottom));
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+#nav::-webkit-scrollbar{display:none}
+
+#brand{
+  text-align:center;
+  font-size:9px;
+  line-height:1.25;
+  color:var(--ink3);
+  letter-spacing:.5px;
+  padding:2px 2px 8px;
+  font-weight:600;
+}
+#brand b{display:block;font-size:15px;color:var(--ink2);letter-spacing:0}
+#brand #bdate{
+  display:block;font-size:8px;color:var(--ink3);margin-top:1px;
+  letter-spacing:-.2px;line-height:1.3;
+}
+#brand #brefresh{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:22px;height:22px;border-radius:50%;
+  background:#fff;color:var(--ink2);font-size:13px;line-height:1;
+  margin-top:4px;cursor:pointer;
+  box-shadow:0 1px 4px rgba(0,0,0,.06);
+  transition:transform .4s var(--ease),background .25s var(--ease),color .25s var(--ease);
+  -webkit-user-select:none;user-select:none;
+}
+#brand #brefresh:active{transform:scale(.88);background:var(--acc,#EFEFEF)}
+#brand #brefresh.spin{transform:rotate(360deg)}
+
+.navitem{
+  position:relative;
+  flex:0 0 auto;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:3px;
+  padding:7px 1px;
+  min-height:52px;
+  cursor:pointer;
+  color:var(--ink2);
+  transition:background .28s var(--ease),color .28s var(--ease),transform .18s var(--ease);
+  -webkit-user-select:none;user-select:none;
+  border-radius:0 12px 12px 0;
+  margin-right:6px;
+}
+.navitem .ico{
+  font-size:17px;
+  line-height:1;
+  transition:transform .34s var(--ease);
+  filter:grayscale(.15);
+}
+.navitem .txt{
+  font-size:8.5px;
+  line-height:1.15;
+  text-align:center;
+  letter-spacing:-.2px;
+  font-weight:600;
+  word-break:break-all;
+  max-width:100%;
+  padding:0 1px;
+}
+.navitem .dot{
+  position:absolute;
+  left:0;top:50%;
+  width:3px;height:0;
+  border-radius:0 3px 3px 0;
+  background:var(--acc,#C9C9C9);
+  transform:translateY(-50%);
+  transition:height .3s var(--ease);
+}
+.navitem.on{color:var(--ink);background:#fff}
+.navitem.on .ico{transform:scale(1.16)}
+.navitem.on .dot{height:26px}
+.navitem:active{transform:scale(.94)}
+
+/* ---- 右侧内容区 ---- */
+#main{
+  flex:1 1 auto;
+  width:85%;
+  max-width:85%;
+  min-width:0;
+  height:100%;
+  overflow-y:auto;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+  padding:calc(12px + env(safe-area-inset-top)) 12px calc(28px + env(safe-area-inset-bottom)) 11px;
+}
+#main::-webkit-scrollbar{display:none}
+
+.view{display:none;animation:viewin .38s var(--ease)}
+.view.on{display:block}
+@keyframes viewin{
+  from{opacity:0;transform:translateY(12px) scale(.99)}
+  to{opacity:1;transform:none}
+}
+
+/* ---- 头部 ---- */
+.head{margin-bottom:12px;padding-left:2px}
+.head h1{
+  font-size:19px;
+  font-weight:800;
+  letter-spacing:-.4px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  line-height:1.3;
+}
+.head p{font-size:11px;color:var(--ink3);margin-top:2px;letter-spacing:.2px}
+
+/* ---- 卡片 ---- */
+.card{
+  background:#fff;
+  border-radius:var(--r);
+  padding:13px 13px;
+  margin-bottom:10px;
+  box-shadow:var(--sh);
+  border:1px solid rgba(0,0,0,.02);
+  transform:translateZ(0);
+}
+.card.tint{background:var(--bgc,#fff)}
+.card h2{
+  font-size:13px;
+  font-weight:800;
+  margin-bottom:9px;
+  display:flex;
+  align-items:flex-start;
+  gap:6px;
+  letter-spacing:-.2px;
+  color:var(--ink);
+  flex-wrap:nowrap;
+  min-width:0;
+  line-height:1.4;
+}
+.card h2 .badge{
+  margin-left:auto;
+  font-size:9.5px;
+  font-weight:700;
+  padding:2px 7px;
+  border-radius:20px;
+  background:rgba(255,255,255,.85);
+  color:var(--ink2);
+  letter-spacing:0;
+  white-space:nowrap;
+  flex:0 0 auto;
+  word-break:keep-all;
+}
+
+/* ---- 通用按钮 ---- */
+.btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  padding:9px 14px;
+  border-radius:11px;
+  font-size:12.5px;
+  font-weight:700;
+  background:#fff;
+  color:var(--ink);
+  border:1px solid var(--line);
+  cursor:pointer;
+  transition:transform .16s var(--ease),background .25s var(--ease),box-shadow .25s var(--ease);
+  -webkit-user-select:none;user-select:none;
+}
+.btn:active{transform:scale(.95)}
+.btn.pri{background:var(--acc,#4A4A4A);color:#fff;border-color:transparent;box-shadow:0 3px 10px var(--accs,rgba(0,0,0,.12))}
+.btn.pri:active{box-shadow:0 1px 4px var(--accs,rgba(0,0,0,.12))}
+.btn.wide{width:100%}
+.btn.sm{padding:6px 10px;font-size:11px;border-radius:9px}
+
+/* ---- 输入框 ---- */
+.ta,.in{
+  width:100%;
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:10px 12px;
+  font-size:13.5px;
+  line-height:1.6;
+  resize:none;
+  transition:border-color .25s var(--ease),box-shadow .25s var(--ease);
+}
+.ta:focus,.in:focus{border-color:var(--acc,#BBB);box-shadow:0 0 0 3px var(--accs,rgba(0,0,0,.05))}
+.ta::placeholder,.in::placeholder{color:var(--ink3)}
+
+/* ---- 列表 / 条目 ---- */
+.item{
+  background:#fff;
+  border-radius:12px;
+  padding:10px 11px;
+  margin-bottom:8px;
+  border:1px solid rgba(0,0,0,.025);
+  transition:transform .2s var(--ease);
+}
+.item:active{transform:scale(.985)}
+.item:last-child{margin-bottom:0}
+.item .t{font-size:13px;font-weight:700;margin-bottom:3px;letter-spacing:-.2px}
+.item .d{font-size:11.5px;color:var(--ink2);line-height:1.62}
+.item .m{font-size:10px;color:var(--ink3);margin-top:5px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+
+.tag{
+  display:inline-block;
+  font-size:9.5px;
+  font-weight:700;
+  padding:2.5px 7px;
+  border-radius:20px;
+  background:var(--tg,#F1F1F1);
+  color:var(--ink2);
+  margin:0 4px 4px 0;
+  letter-spacing:0;
+}
+
+/* ---- 勾选行 ---- */
+.chk{
+  display:flex;
+  align-items:flex-start;
+  gap:9px;
+  padding:9px 10px;
+  background:#fff;
+  border-radius:12px;
+  margin-bottom:7px;
+  cursor:pointer;
+  transition:background .25s var(--ease),transform .18s var(--ease),opacity .25s var(--ease);
+  border:1px solid rgba(0,0,0,.025);
+}
+.chk:active{transform:scale(.985)}
+.chk .box{
+  flex:0 0 auto;
+  width:19px;height:19px;
+  border-radius:7px;
+  border:1.8px solid #DCDCDC;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;color:#fff;
+  transition:background .25s var(--ease),border-color .25s var(--ease),transform .25s var(--ease);
+  margin-top:1px;
+}
+.chk .lb{font-size:12.5px;line-height:1.55;flex:1}
+.chk .lb small{display:block;font-size:10.5px;color:var(--ink3);margin-top:1px}
+.chk.done{opacity:.62}
+.chk.done .lb{text-decoration:line-through;text-decoration-color:var(--ink3)}
+.chk.done .box{background:var(--acc,#4A4A4A);border-color:var(--acc,#4A4A4A);transform:scale(1.06)}
+
+/* ---- 进度条 ---- */
+.bar{height:9px;border-radius:9px;background:#EFEFEF;overflow:hidden;margin:7px 0 4px}
+.bar i{
+  display:block;height:100%;border-radius:9px;
+  background:var(--acc,#888);
+  width:0;
+  transition:width .7s var(--ease);
+}
+.kv{display:flex;align-items:baseline;gap:5px}
+.kv b{font-size:23px;font-weight:800;letter-spacing:-1px}
+.kv span{font-size:11px;color:var(--ink3)}
+
+/* ---- 网格 ---- */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.stat{
+  background:#fff;
+  border-radius:12px;
+  padding:9px 10px;
+  text-align:center;
+  border:1px solid rgba(0,0,0,.025);
+}
+.stat b{display:block;font-size:18px;font-weight:800;letter-spacing:-.6px;line-height:1.25}
+.stat span{font-size:10px;color:var(--ink3)}
+.stat em{font-size:9.5px;font-style:normal;color:var(--ink2)}
+
+/* ---- 打卡日历 ---- */
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.cal .wd{font-size:9.5px;color:var(--ink3);text-align:center;font-weight:700;padding-bottom:2px}
+.cal .d{
+  aspect-ratio:1;
+  border-radius:9px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;
+  background:#F4F4F4;color:var(--ink3);
+  transition:background .3s var(--ease),color .3s var(--ease),transform .2s var(--ease);
+  cursor:pointer;
+  -webkit-user-select:none;user-select:none;
+}
+.cal .d:active{transform:scale(.9)}
+.cal .d.on{background:var(--acc,#8FCFA8);color:#fff}
+.cal .d.today{box-shadow:0 0 0 2px var(--acc,#8FCFA8) inset;color:var(--ink)}
+.cal .d.on.today{color:#fff;box-shadow:none}
+.cal .d.blank{background:transparent;cursor:default;pointer-events:none}
+
+/* ---- 折叠 ---- */
+.fold{
+  background:#fff;border-radius:12px;margin-bottom:8px;overflow:hidden;
+  border:1px solid rgba(0,0,0,.025);
+}
+.fold>summary{
+  list-style:none;cursor:pointer;
+  padding:11px 12px;
+  font-size:13px;font-weight:700;
+  display:flex;align-items:center;gap:7px;
+  transition:background .25s var(--ease);
+}
+.fold>summary::-webkit-details-marker{display:none}
+.fold>summary:active{background:#FAFAFA}
+.fold>summary .arw{margin-left:auto;font-size:10px;color:var(--ink3);transition:transform .3s var(--ease)}
+.fold[open]>summary .arw{transform:rotate(90deg)}
+.fold .body{padding:0 12px 12px;animation:viewin .3s var(--ease)}
+
+/* ---- 跟读卡 ---- */
+.spk{
+  background:#fff;border-radius:13px;padding:12px;
+  margin-bottom:9px;border:1px solid rgba(0,0,0,.025);
+  transition:transform .2s var(--ease);
+}
+.spk .en{font-size:14px;font-weight:700;line-height:1.5;letter-spacing:-.2px}
+.spk .cn{font-size:11.5px;color:var(--ink2);margin-top:3px}
+.spk .row{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap;align-items:center}
+.spk .tip{font-size:9.5px;color:var(--ink3)}
+.spk.done{background:var(--bgc,#F7FBF8)}
+
+/* ---- 树洞 ---- */
+.ta.lg{min-height:118px}
+.note{
+  background:#fff;border-radius:12px;padding:10px 11px;margin-bottom:8px;
+  border:1px solid rgba(0,0,0,.025);
+  animation:viewin .3s var(--ease);
+}
+.note .nt{font-size:9.5px;color:var(--ink3);display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.note .nc{font-size:12.5px;line-height:1.7;white-space:pre-wrap;word-break:break-word}
+.note .del{margin-left:auto;font-size:14px;color:#D6D6D6;padding:0 2px;cursor:pointer;transition:color .2s}
+.note .del:active{color:#E88}
+
+/* ---- 提示 ---- */
+.toast{
+  position:fixed;
+  left:50%;bottom:calc(24px + env(safe-area-inset-bottom));
+  transform:translate(-50%,20px);
+  background:rgba(58,58,58,.94);
+  color:#fff;font-size:12px;font-weight:600;
+  padding:9px 17px;border-radius:22px;
+  opacity:0;pointer-events:none;
+  transition:opacity .3s var(--ease),transform .3s var(--ease);
+  z-index:99;white-space:nowrap;max-width:82vw;
+  backdrop-filter:blur(8px);
+}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+.empty{text-align:center;font-size:11.5px;color:var(--ink3);padding:16px 8px}
+.hr{height:1px;background:var(--line);margin:10px 0}
+.mini{font-size:10.5px;color:var(--ink3);line-height:1.6}
+.pill{display:inline-block;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;background:#F3F3F3;color:var(--ink2);margin:0 4px 5px 0;cursor:pointer;transition:background .22s var(--ease),color .22s var(--ease)}
+.pill:active{transform:scale(.94)}
+.quote{
+  font-size:13.5px;line-height:1.75;font-weight:600;
+  letter-spacing:-.2px;color:var(--ink);
+}
+.quote:before{content:"“";font-size:24px;color:var(--acc,#CCC);line-height:0;vertical-align:-6px;margin-right:2px}
+.quote:after{content:"”";font-size:24px;color:var(--acc,#CCC);line-height:0;vertical-align:-8px;margin-left:2px}
+</style>
+</head>
+<body>
+<div id="app">
+  <nav id="nav">
+    <div id="brand"><b>工作台</b><span id="bdate"></span>
+      <a id="bgrowth" href="成长打卡.html" title="个人成长打卡" style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#fff;color:var(--ink2);font-size:12px;line-height:1;margin-top:4px;cursor:pointer;text-decoration:none;box-shadow:0 1px 4px rgba(0,0,0,.06)">⚓</a>
+      <span id="brefresh" title="刷新今日内容">⟳</span>
+    </div>
+  </nav>
+  <main id="main"></main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   工具 & 本地存储
+   ========================================================= */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const LS={
+  get(k,d){try{const v=localStorage.getItem('wb_'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},
+  set(k,v){try{localStorage.setItem('wb_'+k,JSON.stringify(v))}catch(e){}},
+};
+const todayKey=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()};
+/* 周标识：返回该日期所在周的周一（YYYY-M-D），用于每周复习归档 */
+const weekKey=(dt)=>{const d=dt?new Date(dt):new Date();const day=(d.getDay()+6)%7;const mon=new Date(d);mon.setDate(d.getDate()-day);return mon.getFullYear()+'-'+(mon.getMonth()+1)+'-'+mon.getDate()};
+const weekRange=()=>{const now=new Date();const day=(now.getDay()+6)%7;const mon=new Date(now);mon.setDate(now.getDate()-day);const sun=new Date(mon);sun.setDate(mon.getDate()+6);const f=x=>(x.getMonth()+1)+'/'+x.getDate();return f(mon)+' - '+f(sun)};
+
+/* ===== 减脂体质计算 ===== */
+const ACT={
+  sed:{n:'久坐少动',f:1.2,d:'几乎不运动，以坐姿工作为主'},
+  light:{n:'轻度活动',f:1.375,d:'每周运动 1–3 次，或日常走动较多'},
+  mid:{n:'中度活动',f:1.55,d:'每周运动 3–5 次，有规律训练'},
+  high:{n:'高强度',f:1.725,d:'每周运动 6–7 次，或体力劳动'}
+};
+/* BMR：Mifflin-St Jeor 公式（国际通用，误差最小） */
+const calcBMR=(sex,w,h,age)=>Math.round(10*w+6.25*h-5*age+(sex==='m'?5:-161));
+const calcBMI=(w,h)=>{if(!w||!h)return 0;const m=h/100;return Math.round(w/(m*m)*10)/10};
+const bmiTag=(b)=>{if(b<18.5)return{n:'偏瘦',c:'#9FC3EA'};if(b<24)return{n:'正常',c:'#8FCFA8'};if(b<28)return{n:'偏胖',c:'#EFC88B'};return{n:'肥胖',c:'#F0A8A8'}};
+/* 理想体重区间（BMI 18.5–24 对应） */
+const idealRange=(h)=>{const m=h/100;return[Math.round(18.5*m*m*10)/10,Math.round(24*m*m*10)/10]};
+
+/* ===== 央妈减肥法 / 《成人肥胖食养指南（2024年版）》 =====
+   国家卫健委发布，常被称作"央妈减肥法"。核心是可量化的几条：
+   ① 热量：在消耗基础上每天减 500–1000 kcal，或减 30%–50%；
+      限能量平衡膳食参考区间为 男 1200–1500、女 1000–1200 kcal/d
+   ② 供能比：碳水 50%–60%、脂肪 20%–30%、蛋白质 15%–20%
+   ③ 三餐供能比 3:4:3
+   ④ 晚餐 17:00–19:00，晚餐后不再进食（可饮水）
+   ⑤ 进餐顺序：蔬菜 → 肉类 → 主食
+   ⑥ 盐 <5g/d，烹调油 15–25g/d
+   ⑦ 减重速度 每月 2–4kg（每周约 0.5–1kg），半年减当前体重 5%–10%
+   ⑧ 饮水 1500–2000ml；睡眠约 7 小时；每周有氧 150–300 分钟 */
+const OFFICIAL={
+  kcal:{m:[1200,1500],f:[1000,1200]},       /* 限能量平衡膳食参考区间 */
+  cut:[500,1000],                           /* 每日能量缺口区间 */
+  pct:[30,50],                              /* 或按消耗的 30%–50% 减少 */
+  macro:{carb:[50,60],fat:[20,30],pro:[15,20]},
+  mealRatio:[3,4,3],                        /* 早:中:晚 */
+  dinner:[17,19],                           /* 晚餐时段 */
+  oil:[15,25],salt:5,
+  lossWeek:[0.5,1],lossMonth:[2,4],
+  water:[1500,2000],
+  aerobic:[150,300],resist:[2,3]
+};
+
+/* 七大地区四季食谱（节选自指南的示例菜单，热量按 1200/1400/1600 三档）
+   字段：b=早餐 l=中餐 d=晚餐 k=该组合参考热量 */
+const REGION={
+  hd:{n:'华东',e:'🌊',t:'主食以大米为主，湖鲜河鲜丰富，口味偏清淡',
+    s:{'春':[
+      {早:'燕麦芡实饭 · 白灼虾 · 凉拌马兰头',午:'二米饭 · 清蒸鲈鱼 · 蒜泥茼蒿',晚:'黑米饭 · 鲫鱼豆腐汤 · 清炒娃娃菜',k:1200},
+      {早:'菜肉小馄饨 · 无糖酸奶',午:'糙米饭 · 紫苏蒸香螺 · 香菇冬笋',晚:'青稞饭 · 盐水虾 · 香菇青菜',k:1400},
+      {早:'蒸南瓜 · 煮鸡蛋 · 燕麦牛奶',午:'糙米土豆饭 · 杏鲍菇牛柳 · 拌三丝',晚:'赤小豆玉米饭 · 清蒸大闸蟹 · 清炒杭白菜',k:1600}],
+     '夏':[
+      {早:'杂粮粥 · 水煮蛋 · 凉拌黄瓜',午:'燕麦芡实饭 · 仔姜炒牛肉 · 紫苏花蛤',晚:'鸡丝荞麦凉面 · 冬瓜汤',k:1200},
+      {早:'全麦面包 · 脱脂牛奶 · 圣女果',午:'二米饭 · 清蒸小黄鱼 · 蒜蓉空心菜',晚:'玉米 · 白灼基围虾 · 凉拌木耳',k:1400},
+      {早:'燕麦片 · 鸡蛋 · 蓝莓',午:'藜麦饭 · 番茄牛腩 · 清炒时蔬',晚:'荞麦面 · 虾仁沙拉 · 菌菇汤',k:1600}],
+     '秋':[
+      {早:'花卷 · 豆腐脑 · 茶叶蛋',午:'藜麦薏米饭 · 萝卜炖羊肉 · 醋溜辣白菜',晚:'黑米饭 · 蒜苔牛肉 · 菠菜蘑菇汤',k:1200},
+      {早:'冬菜虾仁小馄饨 · 无糖酸奶',午:'二米饭 · 紫苏蒸香螺 · 清炒娃娃菜',晚:'青稞饭 · 盐水虾 · 香菇青菜',k:1400},
+      {早:'蒸老南瓜 · 煮鸡蛋 · 燕麦牛奶',午:'糙米土豆饭 · 黄精虫草花炖鸡 · 蒜泥茼蒿',晚:'赤小豆玉米饭 · 清蒸大闸蟹 · 清炒杭白菜',k:1600}],
+     '冬':[
+      {早:'花卷 · 豆腐脑 · 茶叶蛋 · 脱脂牛奶',午:'藜麦薏米饭 · 萝卜炖羊肉 · 香菇冬笋',晚:'黑米饭 · 鸭血豆腐 · 菠菜蘑菇汤',k:1200},
+      {早:'冬菜虾仁小馄饨 · 无糖酸奶',午:'二米饭 · 紫苏蒸香螺 · 清炒娃娃菜',晚:'青稞饭 · 鲫鱼豆腐汤 · 香菇青菜',k:1400},
+      {早:'蒸老南瓜 · 煮鸡蛋 · 燕麦牛奶',午:'糙米土豆饭 · 杏鲍菇牛柳 · 蒜泥茼蒿',晚:'赤小豆玉米饭 · 清蒸大闸蟹 · 清炒杭白菜',k:1600}]}},
+
+  hn:{n:'华南',e:'🌴',t:'主食以大米为主，有喝汤习惯，口味清淡、部分嗜辣',
+    s:{'春':[
+      {早:'低脂牛奶 · 蒸芋头',午:'米饭 · 白灼虾 · 蒜蓉菜心',晚:'芋头蒸鸡块 · 冬瓜海带汤',k:1200},
+      {早:'鸡蛋炒粿条 · 豆浆',午:'米饭 · 清蒸鲈鱼 · 炒芥蓝',晚:'莱菔子桃仁杏仁骨头汤 · 凉拌木耳',k:1400},
+      {早:'瘦肉粥 · 水煮蛋 · 时令水果',午:'米饭 · 白切鸡(去皮) · 蒜蓉生菜',晚:'杂粮饭 · 番茄豆腐汤 · 清炒空心菜',k:1600}],
+     '夏':[
+      {早:'鸡蛋炒粿条 · 低脂牛奶',午:'米饭 · 冬瓜海带汤 · 白灼虾',晚:'芋头蒸鸡块 · 蒜蓉丝瓜',k:1200},
+      {早:'肠粉(少油) · 无糖豆浆',午:'米饭 · 清蒸鱼 · 蒜蓉菜心',晚:'杂粮饭 · 番茄豆腐汤 · 凉拌苦瓜',k:1400},
+      {早:'杂粮粥 · 水煮蛋 · 圣女果',午:'米饭 · 白切鸡(去皮) · 白灼芥蓝',晚:'红薯 · 虾仁豆腐汤 · 清炒时蔬',k:1600}],
+     '秋':[
+      {早:'切片面包 · 低脂牛奶',午:'米饭 · 芋头蒸鸡块 · 蒜蓉菜心',晚:'麻仁当归瘦肉汤 · 杂粮饭',k:1200},
+      {早:'瘦肉粥 · 水煮蛋',午:'米饭 · 清蒸海鱼 · 炒时蔬',晚:'杂粮饭 · 冬瓜薏米汤 · 白灼虾',k:1400},
+      {早:'蒸红薯 · 豆浆 · 鸡蛋',午:'米饭 · 白切鸡(去皮) · 蒜蓉生菜',晚:'杂粮饭 · 山药排骨汤 · 清炒芥蓝',k:1600}],
+     '冬':[
+      {早:'切片面包 · 低脂牛奶',午:'米饭 · 芋头蒸鸡块 · 蒜蓉菜心',晚:'麻仁当归瘦肉汤 · 蒸红薯',k:1200},
+      {早:'杂粮粥 · 水煮蛋 · 时令水果',午:'米饭 · 清蒸鲈鱼 · 炒芥蓝',晚:'杂粮饭 · 冬瓜海带汤 · 白灼虾',k:1400},
+      {早:'瘦肉粥 · 鸡蛋 · 豆浆',午:'米饭 · 白切鸡(去皮) · 蒜蓉生菜',晚:'杂粮饭 · 番茄豆腐汤 · 清炒时蔬',k:1600}]}},
+
+  hb:{n:'华北',e:'🏯',t:'喜面食及畜禽肉，蔬菜水产偏少，口味厚重偏咸',
+    s:{'春':[
+      {早:'南瓜窝头 · 蒸蛋羹 · 脱脂牛奶',午:'土豆蒸米饭 · 豆腐焖草鱼 · 虾皮炒菠菜',晚:'茯苓发糕 · 清炒小白菜 · 海米萝卜紫菜汤',k:1200},
+      {早:'桂花山药软饼 · 脱脂牛奶',午:'赤豆黄精紫米饭 · 彩椒炒鸡丁 · 白灼西兰花',晚:'西红柿鸡蛋面 · 白菜烧豆腐',k:1400},
+      {早:'杂粮粥 · 蒸铁棍山药 · 牛奶蒸蛋羹',午:'豆浆蒸杂粮饭 · 酸汤汆牛柳 · 蒜蓉炒蒿子秆',晚:'腰豆香芋紫米饭 · 醋溜白菜',k:1600}],
+     '夏':[
+      {早:'香葱鸡蛋软饼 · 胡萝卜鲍菇炒青笋',午:'芡实燕麦糙米饭 · 肉末豆腐蒸槐花',晚:'香菇蒸仔鸡 · 凉拌黄瓜',k:1200},
+      {早:'全麦馒头 · 豆浆 · 凉拌黄瓜',午:'杂粮饭 · 清蒸草鱼 · 蒜蓉菠菜',晚:'杂粮粥 · 清炒豆芽 · 蒸南瓜',k:1400},
+      {早:'玉米 · 鸡蛋 · 脱脂牛奶',午:'二米饭 · 青椒炒鸡丁 · 白灼西兰花',晚:'全麦面 · 番茄蛋汤 · 凉拌木耳',k:1600}],
+     '秋':[
+      {早:'南瓜窝头 · 蒸蛋羹 · 脱脂牛奶',午:'土豆蒸米饭 · 豆腐焖草鱼 · 虾皮炒菠菜',晚:'茯苓发糕 · 清炒小白菜 · 海米萝卜紫菜汤',k:1200},
+      {早:'小米粥 · 蒸山药 · 煮鸡蛋',午:'杂粮饭 · 清蒸鲈鱼 · 蒜蓉蒿子秆',晚:'全麦馒头 · 白菜豆腐汤 · 凉拌菠菜',k:1400},
+      {早:'杂粮粥 · 牛奶蒸蛋羹 · 香干炒菠菜',午:'豆浆蒸杂粮饭 · 酸汤汆牛柳 · 蒜蓉炒蒿子秆',晚:'腰豆香芋紫米饭 · 醋溜白菜',k:1600}],
+     '冬':[
+      {早:'虾皮炒菠菜 · 脱脂牛奶 · 蒸红薯',午:'豆腐焖草鱼 · 二米饭 · 清炒时蔬',晚:'海米萝卜紫菜汤 · 全麦馒头',k:1200},
+      {早:'南瓜窝头 · 蒸蛋羹 · 脱脂牛奶',午:'土豆蒸米饭 · 豆腐焖草鱼 · 虾皮炒菠菜',晚:'茯苓发糕 · 清炒小白菜 · 海米萝卜紫菜汤',k:1400},
+      {早:'杂粮粥 · 蒸铁棍山药 · 牛奶蒸蛋羹',午:'豆浆蒸杂粮饭 · 酸汤汆牛柳 · 蒜蓉炒蒿子秆',晚:'腰豆香芋紫米饭 · 醋溜白菜',k:1600}]}},
+
+  hz:{n:'华中',e:'🌾',t:'米面为主，蔬菜种类多、水果丰富，口味偏辣、油盐偏重',
+    s:{'春':[
+      {早:'蒸山药 · 牛奶 · 清炒芥菜',午:'杂粮米饭 · 家常南豆腐 · 彩椒大葱鸡胸肉',晚:'蒸山药 · 清蒸基围虾 · 凉拌竹笋',k:1200},
+      {早:'煮玉米 · 西红柿 · 水煮蛋',午:'杂粮米饭 · 芹菜炒香干 · 当归生姜羊肉汤',晚:'芋头红米饭 · 剁椒蒸鱼头 · 茼蒿菜',k:1400},
+      {早:'玉米面饼 · 肉末鸡蛋羹 · 无糖豆浆',午:'杂粮米饭 · 剁椒鱼块 · 芹菜炒牛柳',晚:'杂粮米饭 · 虾仁滑蛋 · 冬瓜海带汤',k:1600}],
+     '夏':[
+      {早:'牛奶枸杞燕麦片粥',午:'紫薯香菇干蒸去皮鸡 · 杂粮饭',晚:'冬瓜海带汤 · 凉拌黄瓜',k:1200},
+      {早:'蒸山药 · 清炒油麦菜',午:'杂粮米饭 · 清蒸鱼 · 蒜蓉丝瓜',晚:'小米粥 · 凉拌豆腐 · 清炒苋菜',k:1400},
+      {早:'玉米面饼 · 无糖豆浆 · 鸡蛋',午:'杂粮米饭 · 剁椒鱼块 · 酸菜金针菇',晚:'杂粮米饭 · 虾仁滑蛋 · 冬瓜海带汤',k:1600}],
+     '秋':[
+      {早:'蒸山药 · 牛奶 · 清炒芥菜',午:'杂粮米饭 · 家常南豆腐 · 彩椒大葱鸡胸肉',晚:'薏苡仁藕香汤 · 蒸山药',k:1200},
+      {早:'赤小豆薏米粥 · 清炒萝卜',午:'杂粮米饭 · 芹菜炒牛柳 · 清炒西兰花',晚:'芋头红米饭 · 剁椒蒸鱼头 · 茼蒿菜',k:1400},
+      {早:'玉米面饼 · 肉末鸡蛋羹 · 无糖豆浆',午:'杂粮米饭 · 剁椒鱼块 · 芹菜炒牛柳',晚:'杂粮米饭 · 虾仁滑蛋 · 冬瓜海带汤',k:1600}],
+     '冬':[
+      {早:'蒸山药 · 牛奶 · 清炒芥菜',午:'当归生姜羊肉汤 · 杂粮米饭 · 清炒萝卜',晚:'芋头红米饭 · 清蒸基围虾 · 凉拌竹笋',k:1200},
+      {早:'赤小豆薏米粥 · 芹菜炒香干',午:'杂粮米饭 · 剁椒蒸鱼头 · 清炒西兰花',晚:'蒸山药 · 凉拌竹笋 · 豆豉煮冬苋菜',k:1400},
+      {早:'玉米面饼 · 肉末鸡蛋羹 · 无糖豆浆',午:'杂粮米饭 · 剁椒鱼块 · 芹菜炒牛柳',晚:'杂粮米饭 · 虾仁滑蛋 · 冬瓜海带汤',k:1600}]}},
+
+  xn:{n:'西南',e:'🌶️',t:'大米糯米为主，禽畜肉多，口味重，喜辣麻酸',
+    s:{'春':[
+      {早:'蒸蛋羹 · 杂粮粥',午:'杂粮饭 · 蒜蓉金针菇 · 清炒时蔬',晚:'蔬菜汤 · 杂粮饭',k:1200},
+      {早:'荞麦面 · 水煮蛋',午:'杂粮饭 · 韭菜炒豆腐干 · 清炒莴笋',晚:'番茄蛋汤 · 凉拌黄瓜',k:1400},
+      {早:'杂粮煎饼 · 无糖豆浆',午:'杂粮米饭 · 葱油手撕鸡(去皮) · 蒜蓉油麦菜',晚:'杂粮饭 · 菌菇汤 · 清炒时蔬',k:1600}],
+     '夏':[
+      {早:'杂粮煎饼 · 豆浆',午:'杂粮饭 · 韭菜炒豆腐干 · 蒜蓉金针菇',晚:'杂粮米饭 · 葱油手撕鸡(去皮)',k:1200},
+      {早:'蒸蛋羹 · 玉米',午:'杂粮饭 · 清炒时蔬 · 凉拌木耳',晚:'番茄蛋汤 · 蒸红薯',k:1400},
+      {早:'荞麦面 · 水煮蛋 · 时令水果',午:'杂粮米饭 · 葱油手撕鸡 · 蒜蓉油麦菜',晚:'杂粮饭 · 菌菇汤 · 清炒时蔬',k:1600}],
+     '秋':[
+      {早:'蒸蛋羹 · 杂粮粥',午:'杂粮饭 · 蒜蓉金针菇 · 清炒时蔬',晚:'蔬菜汤 · 杂粮饭',k:1200},
+      {早:'荞麦面 · 水煮蛋',午:'杂粮饭 · 韭菜炒豆腐干 · 清炒莴笋',晚:'番茄蛋汤 · 凉拌黄瓜',k:1400},
+      {早:'杂粮煎饼 · 无糖豆浆',午:'杂粮米饭 · 葱油手撕鸡(去皮) · 蒜蓉油麦菜',晚:'杂粮饭 · 菌菇汤 · 清炒时蔬',k:1600}],
+     '冬':[
+      {早:'蒸蛋羹 · 杂粮粥',午:'杂粮饭 · 蒜蓉金针菇 · 清炒时蔬',晚:'蔬菜汤 · 蒸南瓜',k:1200},
+      {早:'荞麦面 · 水煮蛋',午:'杂粮饭 · 韭菜炒豆腐干 · 清炒莴笋',晚:'番茄蛋汤 · 凉拌黄瓜',k:1400},
+      {早:'杂粮煎饼 · 无糖豆浆',午:'杂粮米饭 · 葱油手撕鸡(去皮) · 蒜蓉油麦菜',晚:'杂粮饭 · 菌菇汤 · 清炒时蔬',k:1600}]}},
+
+  db:{n:'东北',e:'❄️',t:'米面、畜禽肉及奶类为主，炖菜多，肥厚实在、味重色浓',
+    s:{'春':[
+      {早:'杂粮煎饼 · 无糖豆浆',午:'二米饭 · 猪肉炖酸菜 · 清肺小炒',晚:'红枣发糕 · 藜麦沙拉',k:1200},
+      {早:'蒸山药 · 低脂牛奶 · 茶叶蛋',午:'二米饭 · 猪肉炖酸菜 · 芝麻菠菜',晚:'藜麦沙拉 · 红枣发糕',k:1400},
+      {早:'三明治 · 低脂牛奶 · 蔬菜沙拉',午:'玉米面馒头 · 清蒸鲈鱼 · 辣炒莴笋丝',晚:'玉米粥 · 蒜蓉西兰花 · 木耳拌干豆腐',k:1600}],
+     '夏':[
+      {早:'煮玉米 · 低脂牛奶',午:'沙葱猪肉水饺 · 凉拌黄瓜',晚:'莲子百合粥 · 清炒时蔬',k:1200},
+      {早:'杂粮煎饼 · 无糖豆浆',午:'二米饭 · 清蒸鱼 · 蒜蓉菠菜',晚:'打卤面 · 韭菜炒豆芽',k:1400},
+      {早:'三明治 · 低脂牛奶',午:'玉米面馒头 · 清蒸鲈鱼 · 辣炒莴笋丝',晚:'玉米粥 · 蒜蓉西兰花 · 木耳拌干豆腐',k:1600}],
+     '秋':[
+      {早:'杂粮煎饼 · 无糖豆浆',午:'二米饭 · 猪肉炖酸菜 · 清肺小炒',晚:'红枣发糕 · 藜麦沙拉',k:1200},
+      {早:'蒸山药 · 低脂牛奶 · 茶叶蛋',午:'二米饭 · 猪肉炖酸菜 · 芝麻菠菜',晚:'打卤面 · 韭菜炒豆芽',k:1400},
+      {早:'三明治 · 低脂牛奶 · 蔬菜沙拉',午:'玉米面馒头 · 清蒸鲈鱼 · 辣炒莴笋丝',晚:'玉米粥 · 蒜蓉西兰花 · 木耳拌干豆腐',k:1600}],
+     '冬':[
+      {早:'杂粮煎饼 · 无糖豆浆',午:'东北一锅出 · 青椒西葫芦',晚:'打卤面 · 韭菜炒豆芽',k:1200},
+      {早:'蒸山药 · 低脂牛奶 · 茶叶蛋',午:'二米饭 · 猪肉炖酸菜 · 芝麻菠菜',晚:'红枣发糕 · 藜麦沙拉',k:1400},
+      {早:'三明治 · 低脂牛奶 · 蔬菜沙拉',午:'玉米面馒头 · 清蒸鲈鱼 · 辣炒莴笋丝',晚:'玉米粥 · 蒜蓉西兰花 · 木耳拌干豆腐',k:1600}]}},
+
+  xb:{n:'西北',e:'🐑',t:'喜面食，小麦玉米杂粮为主，牛羊肉多，瓜果丰富、绿叶菜偏少',
+    s:{'春':[
+      {早:'红薯山药粥 · 煮鸡蛋',午:'杂粮饼 · 冬瓜炖排骨 · 芹菜炒香干',晚:'羊肉汤面 · 炒青菜',k:1200},
+      {早:'菜包子 · 煮鸡蛋 · 红薯山药粥',午:'杂粮饭 · 清蒸虾仁 · 凉拌三丝',晚:'肉丝面 · 醋熘白菜',k:1400},
+      {早:'杂粮馒头 · 虾皮紫菜鸡蛋羹',午:'羊肉泡馍 · 凉拌三丝 · 清炒豆芽',晚:'葱花饼 · 西红柿炖牛腩',k:1600}],
+     '夏':[
+      {早:'杂粮馒头 · 煮鸡蛋 · 大拌菜',午:'糙米饭 · 清蒸鱼 · 蒜蓉油麦菜',晚:'臊子面 · 凉拌黄瓜',k:1200},
+      {早:'红薯山药粥 · 豆腐脑',午:'杂粮饭 · 清蒸虾仁 · 凉拌三丝',晚:'羊肉汤面 · 炒青菜',k:1400},
+      {早:'杂粮馒头 · 虾皮紫菜鸡蛋羹 · 开心果',午:'羊肉泡馍 · 凉拌三丝 · 清炒豆芽',晚:'葱花饼 · 西红柿炖牛腩',k:1600}],
+     '秋':[
+      {早:'锅盔辣子馍 · 煮鸡蛋 · 豆腐脑',午:'杂粮饼 · 冬瓜炖排骨 · 芹菜炒香干',晚:'羊肉汤面 · 炒青菜',k:1200},
+      {早:'菜包子 · 煮鸡蛋 · 红薯山药粥',午:'杂粮饭 · 清蒸虾仁 · 羊肉汤',晚:'肉丝面 · 醋熘白菜',k:1400},
+      {早:'杂粮馒头 · 虾皮紫菜鸡蛋羹',午:'羊肉泡馍 · 凉拌三丝 · 清炒豆芽',晚:'葱花饼 · 西红柿炖牛腩',k:1600}],
+     '冬':[
+      {早:'红薯山药粥 · 煮鸡蛋',午:'羊肉汤 · 杂粮饼 · 冬瓜',晚:'肉丝面 · 炒青菜',k:1200},
+      {早:'锅盔辣子馍 · 煮鸡蛋 · 豆腐脑',午:'杂粮饼 · 冬瓜炖排骨 · 芹菜炒香干',晚:'羊肉汤面 · 炒青菜',k:1400},
+      {早:'杂粮馒头 · 虾皮紫菜鸡蛋羹 · 开心果',午:'羊肉泡馍 · 凉拌三丝 · 清炒豆芽',晚:'葱花饼 · 西红柿炖牛腩',k:1600}]}}
+};
+const REGION_KEYS=['hd','hn','hb','hz','xn','db','xb'];
+/* 由月份推节气季节 */
+const seasonOf=(m)=>(m>=3&&m<=5)?'春':(m>=6&&m<=8)?'夏':(m>=9&&m<=11)?'秋':'冬';
+
+
+/* ===== 英语每日轮换 =====
+   目的：英语资讯与口语内容每天自动换一批，避免长期只盯着同几条。
+   策略（环形轮转，稳定且刷新感最强）：
+     1) 以"距某个基准日的天数"计算偏移量，每天整体向前推进一步；
+     2) 阅读与口琴使用不同的步长，避免两者同步导致观感单调；
+     3) 同一天内顺序恒定（不跳动），跨天则整体换位；
+     4) 已读进度按"原始索引"记录、口语打卡按"句子内容"记录，
+        所以跨天换序后进度依旧准确对应，不会串位。
+   这样即使内容条目数有限，也不会出现"连续两天头条一样"的情况。 */
+let _enDay=null,_enRead=null,_enSpk=null;
+/* 基准日：2024-01-01（周一），用它算天数差，保证任意日期都有稳定偏移 */
+const EN_BASE=new Date(2024,0,1);
+const enDayNo=tk=>{
+  const p=String(tk).split('-');
+  const d=new Date(+p[0],(+p[1])-1,+p[2]);
+  return Math.floor((d-EN_BASE)/86400000);
+};
+/* 环形轮转：把数组整体前移 offset 位（保证集合不变，仅顺序变化） */
+const ringShift=(arr,offset)=>{
+  const n=arr.length;if(!n)return arr.slice();
+  const k=((offset%n)+n)%n;
+  return arr.slice(k).concat(arr.slice(0,k));
+};
+/* 手动刷新时额外加一次扰动，让"刷新"当下就能看到变化 */
+let _enBoost=0;
+const reshuffleEN=()=>{_enBoost++; _enRead=null;_enSpk=null;};
+const ensureEN=()=>{
+  const tk=todayKey();
+  if(_enDay===tk&&_enRead&&_enSpk)return;
+  const day=enDayNo(tk)+_enBoost;
+  const nR=D.英语阅读.length, nS=D.英语口语.length;
+  /* 步长与数组长度互质，保证长期轮转能遍历到每一个条目 */
+  _enRead=ringShift(D.英语阅读,(day*3)%nR);
+  _enSpk=ringShift(D.英语口语,(day*5+2)%nS);
+  _enDay=tk;
+};
+/* 当日展示用的英语数据集（阅读为"今日推荐"顺序，口语为"今日轮换"顺序） */
+const enReads=()=>{ensureEN();return _enRead};
+const enSpeaks=()=>{ensureEN();return _enSpk};
+/* 通过阅读对象反查它在原始数据中的索引（已读标记以原始索引存档，跨天不丢失） */
+const readIdx=r=>D.英语阅读.indexOf(r);
+
+/* 打卡状态按日存储：{d:'日期', k:{标识:true}}
+   跨天后自动视为全新一天，已完成项归零、重新开始。 */
+const dayDone=(key)=>{
+  const tk=todayKey();
+  let v=LS.get(key,null);
+  /* 兼容旧版永久键（无 d 字段）：判定为过期，当作当日空记录并回写升级 */
+  if(!v||typeof v!=='object'||v.d!==tk||!v.k||typeof v.k!=='object'){
+    const fresh={d:tk,k:{}};
+    if(v!==null)LS.set(key,fresh);      /* 有旧数据才回写，避免无谓写入 */
+    return fresh;
+  }
+  return v;
+};
+const dayDoneSave=(key,obj)=>{obj.d=todayKey();LS.set(key,obj)};
+const dayDoneCount=(key)=>Object.keys(dayDone(key).k).length;
+
+/* ===== 饮食记录 =====
+   结构：{d:'日期', items:[{n:'食物名',k:热量,meal:'早餐|午餐|晚餐|加餐',ts}]}
+   兼容旧版纯数字数组（items 元素为数字）。 */
+const DIET_MEALS=[['早餐','🌅'],['午餐','🌞'],['晚餐','🌙'],['加餐','🍎']];
+const readKcal=()=>{
+  const tk=todayKey();
+  let log=LS.get('kcal',null);
+  const reset=!log||log.d!==tk;
+  if(reset)log={d:tk,items:[]};
+  /* 归一化：把历史数字条目转成对象，避免老数据导致渲染异常 */
+  const raw=log.items||[];
+  const norm=raw.map(x=>typeof x==='number'?{n:'历史记录',k:x,meal:'加餐'}:x);
+  log.items=norm;
+  /* 兼容旧数据时写回，避免每次读取重复转换 */
+  if(!reset&&norm.some((x,i)=>x!==raw[i]))LS.set('kcal',log);
+  return log;
+};
+const kcalTotal=log=>log.items.reduce((a,b)=>a+(+b.k||0),0);
+const mealSum=(log,meal)=>log.items.filter(i=>i.meal===meal).reduce((a,b)=>a+(+b.k||0),0);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const pick=a=>a[(Math.random()*a.length)|0];
+
+/* ===== 天气获取 =====
+   使用 Open-Meteo 免费接口（无需 API Key）。
+   定位优先走浏览器 Geolocation，被拒或超时则回退到 IP 粗略定位。
+   全程失败时降级为手动填写，不影响模块使用。 */
+const WMO={
+  0:{n:'晴',e:'☀️'},1:{n:'晴间多云',e:'🌤'},2:{n:'多云',e:'⛅'},3:{n:'阴',e:'☁️'},
+  45:{n:'有雾',e:'🌫'},48:{n:'冻雾',e:'🌫'},
+  51:{n:'小毛毛雨',e:'🌦'},53:{n:'毛毛雨',e:'🌦'},55:{n:'大毛毛雨',e:'🌦'},
+  61:{n:'小雨',e:'🌧'},63:{n:'中雨',e:'🌧'},65:{n:'大雨',e:'🌧'},
+  66:{n:'冻雨',e:'🌨'},67:{n:'强冻雨',e:'🌨'},
+  71:{n:'小雪',e:'🌨'},73:{n:'中雪',e:'❄️'},75:{n:'大雪',e:'❄️'},77:{n:'米雪',e:'🌨'},
+  80:{n:'阵雨',e:'🌦'},81:{n:'强阵雨',e:'🌧'},82:{n:'暴雨',e:'⛈'},
+  85:{n:'阵雪',e:'🌨'},86:{n:'强阵雪',e:'❄️'},
+  95:{n:'雷阵雨',e:'⛈'},96:{n:'雷阵雨伴冰雹',e:'⛈'},99:{n:'强雷暴',e:'⛈'}
+};
+const wmoOf=c=>WMO[c]||{n:'未知',e:'🌡'};
+/* 温度和降水 → 体感档位，供穿搭规则使用 */
+const tempBand=t=>t>=30?'hot':t>=24?'warm':t>=17?'mild':t>=10?'cool':t>=0?'cold':'freezing';
+const BANDN={hot:'炎热',warm:'温暖',mild:'舒适',cool:'微凉',cold:'寒冷',freezing:'严寒'};
+const isRainy=c=>(c>=51&&c<=67)||(c>=80&&c<=82)||c>=95;
+const isSnowy=c=>(c>=71&&c<=77)||c===85||c===86;
+
+/* 天气新鲜度：多久算"过期"需要重新拉取 */
+const WX_TTL=60*60*1000;                 /* 自动获取的天气缓存有效期：1 小时 */
+const WX_REFRESH_GAP=5*60*1000;          /* 两次自动刷新之间的最小间隔，防抖：5 分钟 */
+const WX_LAST='wxLastTry';               /* 上一次尝试自动获取的时间戳 */
+
+/* 天气是否已过期（手动填写的天气不算过期，始终以用户输入为准） */
+const wxFresh=w=>!!w&&typeof w.at==='number'&&(Date.now()-w.at)<WX_TTL;
+
+/* 天气来源的展示文案：实时 / 缓存 / 手动 */
+const wxSrc=(w)=>{
+  if(!w)return '未获取';
+  if(w.manual)return '手动填写';
+  return wxFresh(w)?'实时':'缓存';
+};
+
+/* 天气状态行：展示"上次更新时间 + 新鲜度"，并提供刷新入口 */
+const wxStamp=(w)=>{
+  if(!w||!w.at)return '';
+  const d=new Date(w.at);
+  const p2=n=>String(n).padStart(2,'0');
+  const hm=p2(d.getHours())+':'+p2(d.getMinutes());
+  const age=Date.now()-w.at;
+  let ago;
+  if(age<60*1000)ago='刚刚';
+  else if(age<60*60*1000)ago=Math.floor(age/60000)+' 分钟前';
+  else if(age<24*60*60*1000)ago=Math.floor(age/3600000)+' 小时前';
+  else ago=Math.floor(age/86400000)+' 天前';
+  const stale=(!w.manual&&!wxFresh(w));
+  return `<div class="mini" style="margin-top:4px;${stale?'color:#D08A6A':''}">${stale?'⚠️ ':''}更新于 ${hm} · ${ago}${stale?' · 建议刷新':''}</div>`;
+};
+
+/* 逆地理编码：把经纬度换成可核对的城市名
+   走 BigDataCloud 的免费反向地理接口（无需 Key，支持中文）。
+   失败不抛出——城市名只是"便于核对"的辅助信息，拿不到就退回坐标展示。 */
+const revGeo=async(lat,lon)=>{
+  /* 加超时：地名只是辅助信息，绝不能拖慢天气本身 */
+  const ctl=(typeof AbortController!=='undefined')?new AbortController():null;
+  const timer=ctl?setTimeout(()=>ctl.abort(),4500):null;
+  try{
+    const q='https://api.bigdatacloud.net/data/reverse-geocode-client?latitude='+lat
+      +'&longitude='+lon+'&localityLanguage=zh';
+    const r=await fetch(q,ctl?{cache:'no-store',signal:ctl.signal}:{cache:'no-store'});
+    if(!r.ok)return null;
+    const j=await r.json();
+    if(!j)return null;
+    /* 逐级拼装便于核对的地名：省 · 市，市与省同名时（直辖市）只留一个 */
+    const prov=j.principalSubdivision||'';
+    const city=j.city||'';
+    const dist=j.locality||'';
+    const parts=[];
+    [prov,city].forEach(x=>{if(x&&!parts.includes(x))parts.push(x)});
+    const label=parts.length?parts.join('·'):(dist||'');
+    if(!label)return null;
+    return {
+      city:label,
+      district:(dist&&dist!==city)?dist:'',
+      country:j.countryName||'',
+      countryCode:j.countryCode||''
+    };
+  }catch(e){/* 静默失败，交由上层兜底 */}
+  finally{if(timer)clearTimeout(timer)}
+  return null;
+};
+
+/* 拉取天气：先定位，再请求 Open-Meteo */
+const fetchWeather=async()=>{
+  const geoOnce=(opts)=>new Promise((res,rej)=>{
+    if(!navigator.geolocation)return rej(new Error('no-geo'));
+    navigator.geolocation.getCurrentPosition(p=>res(p.coords),e=>rej(e),opts);
+  });
+  let lat,lon,city='',country='',district='',src='';
+  try{
+    const c=await geoOnce({enableHighAccuracy:false,timeout:8000,maximumAge:10*60*1000});
+    lat=c.latitude;lon=c.longitude;src='gps';
+    /* 定位成功后做逆地理编码，拿到城市名便于核对 */
+    const g=await revGeo(lat,lon);
+    if(g){city=g.city;country=g.country;district=g.district||''}
+  }catch(e){
+    /* 回退：用 IP 粗略定位（同样免费、无需 Key） */
+    try{
+      const r=await fetch('https://ipapi.co/json/',{cache:'no-store'});
+      const j=await r.json();
+      if(!j||!j.latitude)throw new Error('ip-fail');
+      lat=j.latitude;lon=j.longitude;src='ip';
+      /* IP 定位：ipapi 直接给出城市名，且与坐标同源，可放心跟随 */
+      city=[j.city,j.region].filter(Boolean).filter((x,i,a)=>a.indexOf(x)===i).slice(0,2).join('·')
+           ||j.city||j.region||'';
+      country=j.country_name||'';
+    }catch(e2){const err=new Error('定位失败');err.code='geo';throw err}
+  }
+  /* 城市名兜底：逆地理与 IP 都没拿到时，用坐标让用户仍可核对 */
+  if(!city)city=(Math.abs(lat).toFixed(2)+'°'+((lat>=0)?'N':'S')+', '+Math.abs(lon).toFixed(2)+'°'+((lon>=0)?'E':'W'));
+  const url='https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon
+    +'&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,weather_code,wind_speed_10m'
+    +'&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max'
+    +'&timezone=auto&forecast_days=3';
+  const r=await fetch(url);
+  if(!r.ok)throw new Error('天气服务不可用');
+  const j=await r.json();
+  const cur=j.current||{}, day=(j.daily&&j.daily.time)||[];
+  const daily=day.map((d,i)=>({
+    d,
+    code:(j.daily.weather_code||[])[i],
+    hi:(j.daily.temperature_2m_max||[])[i],
+    lo:(j.daily.temperature_2m_min||[])[i],
+    pop:(j.daily.precipitation_probability_max||[])[i]
+  }));
+  return {
+    t:Math.round(cur.temperature_2m),
+    feels:Math.round(cur.apparent_temperature!=null?cur.apparent_temperature:cur.temperature_2m),
+    code:cur.weather_code,
+    hum:cur.relative_humidity_2m,
+    wind:Math.round(cur.wind_speed_10m||0),
+    day:cur.is_day!==0,
+    city,country,district,src,lat,lon,daily,
+    at:Date.now()
+  };
+};
+
+/* ===== 穿搭推荐引擎 =====
+   两条输入：① 天气档位（硬约束，保证不冷不热）
+             ② 历史偏好加权（软偏好，让推荐越来越像"你的风格"）
+   偏好只统计用户真实录入过的穿搭，按风格/色系/品类分别累加权重。 */
+const OUTFIT_RULES={
+  /* 上装 / 外搭 / 下装 / 鞋履 / 配饰：按温度档位给出候选与权重 */
+  hot:{up:['T恤','衬衫'],out:[],down:['短裤','半身裙','连衣裙','长裤'],shoe:['运动鞋'],acc:['墨镜','帽子'],tip:'透气优先，浅色反射阳光，注意补涂防晒。'},
+  warm:{up:['T恤','衬衫'],out:[],down:['长裤','短裤','半身裙','连衣裙'],shoe:['运动鞋'],acc:['墨镜'],tip:'早晚温差开始出现，可备一件薄外套搭在包上。'},
+  mild:{up:['T恤','衬衫','针织衫','卫衣'],out:['外套','风衣'],down:['长裤','牛仔裤','半身裙'],shoe:['运动鞋','皮鞋'],acc:[],tip:'最百搭的温度，可以放心玩叠穿与色彩。'},
+  cool:{up:['针织衫','卫衣','衬衫'],out:['风衣','外套','大衣'],down:['长裤','牛仔裤'],shoe:['运动鞋','靴子','皮鞋'],acc:['围巾'],tip:'三明治穿法：内薄、中暖、外挡风，方便随时增减。'},
+  cold:{up:['针织衫','卫衣'],out:['大衣','羽绒服','外套'],down:['长裤','牛仔裤'],shoe:['靴子','运动鞋'],acc:['围巾','帽子'],tip:'重点护住颈部与脚踝，这两处散热最快。'},
+  freezing:{up:['针织衫','卫衣'],out:['羽绒服','大衣'],down:['长裤'],shoe:['靴子'],acc:['围巾','帽子'],tip:'打底加绒 + 厚外搭，露出皮肤的面积越小越保暖。'}
+};
+/* 按天气补充候选：下雨加防水、下雪加极保暖 */
+const outfitCandidates=(w)=>{
+  const band=tempBand(w?w.feels!=null?w.feels:w.t:20);
+  const r=OUTFIT_RULES[band]||OUTFIT_RULES.mild;
+  let acc=r.acc.slice(), shoe=r.shoe.slice(), tip=r.tip;
+  if(w){
+    if(isRainy(w.code)){acc.push('帽子');if(!shoe.includes('靴子'))shoe.push('靴子');tip='有降水，鞋尽量选防水材质，包里放一把折叠伞。';}
+    if(isSnowy(w.code)){if(!acc.includes('围巾'))acc.push('围巾');if(!acc.includes('帽子'))acc.push('帽子');if(!shoe.includes('靴子'))shoe.push('靴子');tip='有雪，防滑鞋底 + 厚袜，外层选防风面料。';}
+    if(w.wind>=25){if(!r.out.includes('风衣')&&!r.out.includes('大衣'))acc.push('帽子');tip='风比较大，外搭选带防风性的款式，避免裙摆类单品。';}
+  }
+  return {band,up:r.up.slice(),out:r.out.slice(),down:r.down.slice(),shoe,acc,tip};
+};
+/* 历史偏好：返回 {风格:{k:权重}, 色系:{...}, 品类:{...}, 总条数} */
+const outfitPrefs=()=>{
+  const hist=LS.get('fitLog',[]);
+  const f={},c={},p={};
+  hist.forEach(h=>{
+    if(h.style)f[h.style]=(f[h.style]||0)+1;
+    if(h.color)c[h.color]=(c[h.color]||0)+1;
+    (h.items||[]).forEach(it=>{if(it)p[it]=(p[it]||0)+1});
+  });
+  return {f,c,p,total:hist.length,hist};
+};
+const topK=(obj,k)=>{
+  const a=Object.keys(obj).map(n=>({n,v:obj[n]})).sort((x,y)=>y.v-x.v);
+  return a.slice(0,k);
+};
+/* 生成今日推荐：天气候选 × 历史偏好加权取前几名 */
+const buildOutfit=(w,prefs)=>{
+  const cand=outfitCandidates(w);
+  const rank=(list)=>topK(list.reduce((o,n)=>{o[n]=(prefs.p[n]||0)+1;return o},{}),list.length).map(x=>x.n);
+  const up=rank(cand.up),out=rank(cand.out),down=rank(cand.down),shoe=rank(cand.shoe),acc=rank(cand.acc);
+  /* 风格与色系推荐：有历史就偏向高频，没有就给天气通用建议 */
+  const styleTop=topK(prefs.f,2), colorTop=topK(prefs.c,2);
+  return {cand,up,out,down,shoe,acc,styleTop,colorTop};
+};
+
+/* 图片压缩：等比缩到最长边 max，输出 JPEG，控制 localStorage 占用 */
+const compressImage=(file,max,q)=>new Promise((res,rej)=>{
+  const fr=new FileReader();
+  fr.onerror=()=>rej(new Error('读取图片失败'));
+  fr.onload=()=>{
+    const im=new Image();
+    im.onerror=()=>rej(new Error('图片解析失败'));
+    im.onload=()=>{
+      const scale=Math.min(1,max/Math.max(im.width,im.height));
+      const w=Math.max(1,Math.round(im.width*scale)),h=Math.max(1,Math.round(im.height*scale));
+      const cv=document.createElement('canvas');cv.width=w;cv.height=h;
+      const cx=cv.getContext('2d');
+      cx.fillStyle='#fff';cx.fillRect(0,0,w,h);       /* 透明底转白，避免变黑 */
+      cx.drawImage(im,0,0,w,h);
+      res({data:cv.toDataURL('image/jpeg',q||.72),w,h});
+    };
+    im.src=fr.result;
+  };
+  fr.readAsDataURL(file);
+});
+/* 便于自动化测试：暴露压缩与占用估算（不影响正常使用） */
+if(typeof window!=='undefined'){window.__testCompress=(f,m,q)=>compressImage(f,m,q);window.__testLsBytes=()=>lsBytes();}
+/* 估算 localStorage 占用（字节），用于容量提示 */
+const lsBytes=()=>{
+  let n=0;try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);n+=(k.length+(localStorage.getItem(k)||'').length)*2}}catch(e){}
+  return n;
+};
+
+/* 安全绑定：元素存在才绑定事件（避免 a && a.x = v 的非法赋值写法） */
+function on(sel,evt,fn,exp){const els=(exp||typeof sel!=='string')?[typeof sel==='string'?$(sel):sel]:$$(sel);els.forEach(el=>{if(el)el[evt]=fn});return els[0]}
+
+let tt;
+function toast(msg){
+  const el=$('#toast');el.textContent=msg;el.classList.add('on');
+  clearTimeout(tt);tt=setTimeout(()=>el.classList.remove('on'),1700);
+}
+
+/* =========================================================
+   配色（低饱和马卡龙多巴胺）
+   ========================================================= */
+const PASTEL=[
+  {acc:'#8FCFA8',accs:'rgba(143,207,168,.28)',bgc:'#F4FBF6',tg:'#E4F6EA'}, // 薄荷
+  {acc:'#F0A8A8',accs:'rgba(240,168,168,.28)',bgc:'#FEF6F6',tg:'#FCE6E6'}, // 玫瑰
+  {acc:'#EFC88B',accs:'rgba(239,200,139,.3)',bgc:'#FEFAEF',tg:'#FBEED5'},  // 蜜杏
+  {acc:'#9FC3EA',accs:'rgba(159,195,234,.3)',bgc:'#F4F8FD',tg:'#E2EDF9'},  // 雾蓝
+  {acc:'#C3AEDE',accs:'rgba(195,174,222,.3)',bgc:'#F8F5FC',tg:'#EDE6F6'},  // 薰衣草
+  {acc:'#8FD3D3',accs:'rgba(143,211,211,.3)',bgc:'#F2FBFB',tg:'#DFF4F4'},  // 清泉
+  {acc:'#EBA6C6',accs:'rgba(235,166,198,.28)',bgc:'#FEF5F9',tg:'#FBE2EE'}, // 樱粉
+  {acc:'#B7CE8E',accs:'rgba(183,206,142,.3)',bgc:'#F7FAF0',tg:'#EAF2DA'},  // 嫩芽
+  {acc:'#D9BC9A',accs:'rgba(217,188,154,.3)',bgc:'#FBF7F2',tg:'#F2E8DB'},  // 拿铁
+  {acc:'#A9B8E8',accs:'rgba(169,184,232,.3)',bgc:'#F5F7FD',tg:'#E5E9F8'},  // 蓝铃
+  {acc:'#DDBFA8',accs:'rgba(221,191,168,.3)',bgc:'#FCF8F4',tg:'#F4E9DE'},  // 燕麦
+  {acc:'#9DCBB8',accs:'rgba(157,203,184,.3)',bgc:'#F4FBF8',tg:'#E2F4EC'},  // 青瓷
+];
+
+/* =========================================================
+   预设内容
+   ========================================================= */
+const D={
+灵感:[
+ "你不需要很厉害才能开始，但你需要开始才能很厉害。",
+ "把今天过好，就是对未来最好的安排。",
+ "慢一点没关系，方向对了就不怕路远。",
+ "所有的从容不迫，都是厚积薄发。",
+ "别怕走得慢，怕的是原地站。",
+ "你现在流的汗，都是未来照亮你的光。",
+ "把小事做到极致，就是了不起。",
+ "允许自己普通，但拒绝平庸地放弃。",
+ "焦虑来自想太多，平静来自做起来。",
+ "每天进步1%，一年后是37倍。",
+ "真正的自律，是不需要别人监督的舒服。",
+ "先完成，再完美。",
+ "你不必讨好任何人，只需对得起自己。",
+ "情绪是客人，你是主人。",
+ "把注意力收回来，放在能改变的事上。",
+ "最好的投资，是投资自己的认知。",
+ "安静地努力，是最有声的力量。",
+ "与其抱怨黑暗，不如点亮一盏灯。",
+ "今天也要做那个眼里有光的人。",
+ "人生不是轨道，是旷野。",
+ "克制是最高的自由。",
+ "心宽一寸，路宽一丈。",
+ "行动是打败焦虑最有效的武器。",
+ "热爱可抵岁月漫长。",
+ "向内求，一切答案都在自己身上。",
+ "把日子过成自己喜欢的样子，就是成功。",
+ "你的时间花在哪里，你的结果就在哪里。",
+ "每一次坚持，都是在给未来投票。",
+ "温柔而坚定，是最好的状态。",
+ "此刻开始，永远不晚。"
+],
+英语阅读:[
+ {cat:"新闻",tag:"科技",title:"Foldable Phones Finally Get Cheaper",
+  en:"Foldable smartphones are getting cheaper as hinge parts become easier to make. Several brands have cut prices this year, and sales are expected to double in the mid-range market. Analysts say the next step is making screens last longer.",
+  cn:"随着铰链部件制造难度下降，折叠屏手机正在变便宜。今年多个品牌下调了售价，中端市场的销量预计将翻倍。分析人士称，下一步的关键是让屏幕更耐用。",
+  words:[["hinge","铰链"],["analyst","分析师"],["mid-range","中端"]],
+  src:"TechCrunch", url:"https://techcrunch.com/?s=foldable+phone",
+  q:"What will likely happen next in the foldable market?"},
+ {cat:"新闻",tag:"科技",title:"AI Models Run on Your Phone Now",
+  en:"New chips can run small AI models directly on phones and watches. This means faster replies and better privacy, because your data never leaves the device. Companies are now racing to ship these chips in mass production.",
+  cn:"新一代芯片可以让小型 AI 模型直接在手机和手表上运行。这意味着响应更快、隐私更好，因为数据不会离开设备。多家公司正竞相推进这些芯片的量产。",
+  words:[["chip","芯片"],["privacy","隐私"],["mass production","量产"]],
+  src:"The Verge", url:"https://www.theverge.com/search?q=on-device+AI",
+  q:"Why is on-device AI better for privacy?"},
+ {cat:"新闻",tag:"财经",title:"Gold Prices Stay High as Buyers Wait",
+  en:"Gold has traded in a narrow range for weeks. Some investors buy it to hedge against risk, while others wait for clearer signals. Experts suggest keeping gold under ten percent of a personal portfolio.",
+  cn:"黄金已在窄幅区间震荡数周。部分投资者买入以对冲风险，另一些人则在等待更明确的信号。专家建议个人投资组合中黄金占比控制在 10% 以内。",
+  words:[["hedge","对冲"],["portfolio","投资组合"],["narrow range","窄幅区间"]],
+  src:"Reuters Business", url:"https://www.reuters.com/site-search/?query=gold+price",
+  q:"What percentage of a portfolio do experts suggest for gold?"},
+ {cat:"新闻",tag:"生活",title:"Cities Add More Small Parks",
+  en:"Many cities are turning unused corners into pocket parks. Planners say a green space within a fifteen-minute walk makes residents happier and healthier. Some neighborhoods now score higher on walkability than before.",
+  cn:"许多城市正把闲置角落改造成口袋公园。规划者表示，步行 15 分钟可达的绿地能让居民更快乐、更健康。一些社区在步行友好度上的评分已高于以往。",
+  words:[["pocket park","口袋公园"],["walkability","步行友好度"],["resident","居民"]],
+  src:"The Guardian", url:"https://www.theguardian.com/uk/search?q=pocket+park",
+  q:"What benefit do pocket parks bring to residents?"},
+ {cat:"娱乐",tag:"影视",title:"Real-Life Stories Top the Streaming Charts",
+  en:"Shows based on ordinary people's jobs and lives are drawing big audiences this season. Viewers say they prefer honest details over perfect heroes. Producers are responding by hiring more writers from the industries they portray.",
+  cn:"本季，取材于普通人职业与生活的剧集吸引了大批观众。观众表示，比起完美的英雄，他们更喜欢真实的细节。制作方则通过聘请更多来自被描写行业的编剧来回应。",
+  words:[["streaming","流媒体"],["audience","观众"],["portray","描绘"]],
+  src:"Variety", url:"https://variety.com/?s=streaming+charts",
+  q:"Why are these shows popular with viewers?"},
+ {cat:"娱乐",tag:"音乐",title:"Live Concerts Drive Travel Spending",
+  en:"Music festivals and theater shows are filling calendars again. Fans often travel to other cities for a single night, which lifts hotels, food and local shops. Economists call this the spillover effect of live events.",
+  cn:"音乐节与剧场演出再次排满日程。粉丝常为了一晚的演出跨城出行，带动了酒店、餐饮和本地商铺。经济学家把这种现象称为现场演出的溢出效应。",
+  words:[["spillover effect","溢出效应"],["festival","音乐节"],["lift","带动提升"]],
+  src:"BBC Culture", url:"https://www.bbc.co.uk/search?q=live+concert+travel",
+  q:"How do live events help local businesses?"},
+ {cat:"娱乐",tag:"播客",title:"Podcasts Win the Commute",
+  en:"More people now listen to podcasts on the way to work or while doing housework. Interview and knowledge shows grow the fastest. Hosts say short, focused episodes keep listeners coming back.",
+  cn:"越来越多人在通勤途中或做家务时收听播客。访谈类与知识类节目增长最快。主播表示，短小、聚焦的节目更能留住听众。",
+  words:[["commute","通勤"],["episode","单集节目"],["host","主播"]],
+  src:"NPR", url:"https://www.npr.org/search?query=podcast+commute",
+  q:"When do most people listen to podcasts?"},
+ {cat:"新闻",tag:"时政",title:"Green Jobs Get Official Recognition",
+  en:"Several new occupations, including AI trainers and digital solution designers, have been officially listed. The move helps workers get formal training and clear career paths. Officials say more green and tech roles will follow.",
+  cn:"包括人工智能训练师、数字化解决方案设计师在内的多个新职业已被正式收录。此举有助于从业者获得正规培训和清晰的职业路径。官方表示，还将有更多绿色与科技岗位被纳入。",
+  words:[["occupation","职业"],["recognition","认定"],["career path","职业路径"]],
+  src:"China Daily", url:"https://www.chinadaily.com.cn/search?query=new+occupation",
+  q:"What benefit does official listing bring to workers?"}
+],
+英语口语:[
+ {en:"Let's cut to the chase.",cn:"我们直接说重点吧。",tip:"cut to the chase = 言归正传"},
+ {en:"That's a game changer.",cn:"那是颠覆性的改变。",tip:"形容改变规则的事物"},
+ {en:"I'm on the fence about it.",cn:"我还在犹豫。",tip:"on the fence = 保持中立、未决定"},
+ {en:"Let's touch base next week.",cn:"我们下周再联系。",tip:"职场常用，touch base = 简短沟通"},
+ {en:"It's not my cup of tea.",cn:"那不是我的菜。",tip:"委婉表达不喜欢"},
+ {en:"Could you walk me through it?",cn:"你能带我过一遍吗？",tip:"请求逐步讲解"},
+ {en:"I'll take a rain check.",cn:"改天再说吧。",tip:"婉拒邀请的礼貌说法"},
+ {en:"That rings a bell.",cn:"那听起来耳熟。",tip:"ring a bell = 有印象"},
+ {en:"Let's play it by ear.",cn:"到时看情况定。",tip:"不预先计划，随机应变"},
+ {en:"You're spot on.",cn:"你说得太准了。",tip:"spot on = 完全正确"},
+ {en:"I'm swamped with work today.",cn:"我今天忙得不可开交。",tip:"swamped = 忙翻了"},
+ {en:"Let's call it a day.",cn:"今天就到这儿吧。",tip:"收工 / 结束今天的活"},
+ {en:"It totally slipped my mind.",cn:"我完全忘了这件事。",tip:"slip one's mind = 忘记"},
+ {en:"I couldn't agree more.",cn:"我完全同意。",tip:"语气比 I agree 更强烈"},
+ {en:"No worries, take your time.",cn:"别急，慢慢来。",tip:"安抚对方情绪"},
+ {en:"Long time no see, you look great!",cn:"好久不见，你气色很好！",tip:"寒暄夸人的开场"}
+],
+
+/* 高频短语库：供生词 / 短语归纳与每周复习使用 */
+短语库:[
+ {p:"cut to the chase",m:"言归正传，直接说重点",cat:"职场",eg:"Let's cut to the chase and talk about the budget."},
+ {p:"a game changer",m:"颠覆性的改变",cat:"评论",eg:"This new policy is a real game changer for small firms."},
+ {p:"on the fence",m:"犹豫不决，保持中立",cat:"态度",eg:"I'm still on the fence about taking the offer."},
+ {p:"touch base",m:"简短联系沟通",cat:"职场",eg:"Let's touch base next Monday about the timeline."},
+ {p:"not my cup of tea",m:"不是我的菜，不合我口味",cat:"态度",eg:"Horror movies are not my cup of tea."},
+ {p:"walk me through",m:"带我逐步过一遍",cat:"职场",eg:"Could you walk me through the whole process?"},
+ {p:"take a rain check",m:"改天再说，婉拒邀请",cat:"社交",eg:"I'll take a rain check on dinner tonight."},
+ {p:"ring a bell",m:"听着耳熟，有印象",cat:"社交",eg:"His name rings a bell, but I can't place him."},
+ {p:"play it by ear",m:"见机行事，到时再看",cat:"态度",eg:"We don't have a plan, so let's play it by ear."},
+ {p:"spot on",m:"完全正确，一针见血",cat:"评论",eg:"Your analysis is spot on."},
+ {p:"swamped with",m:"忙得不可开交",cat:"职场",eg:"I'm swamped with work this week."},
+ {p:"call it a day",m:"今天就到这儿，收工",cat:"职场",eg:"It's late, so let's call it a day."},
+ {p:"slip one's mind",m:"一时忘记",cat:"日常",eg:"It completely slipped my mind to reply."},
+ {p:"couldn't agree more",m:"完全同意",cat:"态度",eg:"I couldn't agree more with your point."},
+ {p:"under the weather",m:"身体不适，有点不舒服",cat:"日常",eg:"I'm feeling a bit under the weather today."},
+ {p:"narrow range",m:"窄幅区间，小幅波动",cat:"财经",eg:"Gold has traded in a narrow range for weeks."},
+ {p:"hedge against",m:"对冲（风险）",cat:"财经",eg:"Some investors buy gold to hedge against risk."},
+ {p:"mass production",m:"批量生产，量产",cat:"科技",eg:"The chips are now in mass production."},
+ {p:"spillover effect",m:"溢出效应，连带影响",cat:"经济",eg:"Economists call this the spillover effect of live events."},
+ {p:"keep listeners coming back",m:"留住听众持续回访",cat:"媒体",eg:"Short episodes keep listeners coming back."}
+],
+备选餐:[
+ {n:"清蒸鲈鱼 + 焯青菜",k:280,p:"高蛋白 · 低脂",tag:"正餐"},
+ {n:"鸡胸肉杂蔬碗",k:430,p:"高蛋白 · 高纤维",tag:"正餐"},
+ {n:"虾仁豆腐煲",k:400,p:"低卡 · 高钙",tag:"正餐"},
+ {n:"番茄豆腐汤 + 水煮蛋",k:260,p:"低卡饱腹",tag:"正餐"},
+ {n:"荞麦凉面鸡丝",k:410,p:"清爽不腻",tag:"正餐"},
+ {n:"牛肉彩椒藜麦饭",k:450,p:"补铁 · 持久饱腹",tag:"正餐"},
+ {n:"香煎龙利鱼套餐",k:390,p:"低脂高蛋白",tag:"正餐"},
+ {n:"金枪鱼蔬菜沙拉",k:240,p:"晚间轻食",tag:"轻食"},
+ {n:"无糖希腊酸奶碗",k:210,p:"高蛋白 · 促饱腹",tag:"轻食"},
+ {n:"水煮蛋 + 玉米 + 黑豆浆",k:310,p:"经典减脂搭配",tag:"轻食"},
+ {n:"菌菇鸡胸汤",k:250,p:"暖胃低脂",tag:"轻食"},
+ {n:"白灼虾 + 芦笋",k:230,p:"高蛋白零负担",tag:"轻食"},
+ {n:"全麦鸡蛋三明治",k:290,p:"优质碳水+蛋白",tag:"轻食"},
+ {n:"无糖酸奶 + 一小把坚果",k:180,p:"优质脂肪",tag:"加餐"},
+ {n:"苹果 + 水煮蛋",k:170,p:"耐饿组合",tag:"加餐"},
+ {n:"无糖豆浆 + 全麦面包",k:140,p:"低GI 加餐",tag:"加餐"},
+ {n:"黄瓜 / 圣女果",k:40,p:"几乎零负担",tag:"加餐"},
+ {n:"一小把原味坚果",k:170,p:"健康脂肪",tag:"加餐"},
+ {n:"无糖希腊酸奶",k:130,p:"高蛋白加餐",tag:"加餐"},
+ {n:"蛋白粉 1 勺",k:120,p:"纯蛋白补充",tag:"加餐"}
+],
+常用食物:[
+ ["白米饭(1碗)","232"],["馒头(1个)","223"],["全麦面包(1片)","80"],["面条(1碗)","280"],
+ ["鸡蛋(1个)","78"],["水煮蛋(2个)","156"],["鸡胸肉(100g)","133"],["瘦牛肉(100g)","106"],
+ ["三文鱼(100g)","208"],["基围虾(100g)","93"],["嫩豆腐(100g)","57"],["希腊酸奶(150g)","130"],
+ ["无糖豆浆(300ml)","60"],["脱脂牛奶(250ml)","85"],["苹果(1个)","95"],["香蕉(1根)","105"],
+ ["蓝莓(100g)","57"],["西兰花(100g)","34"],["炒青菜(1份)","120"],["清炒时蔬(1份)","100"],
+ ["玉米(1根)","112"],["红薯(100g)","99"],["燕麦(40g)","155"],["牛肉面(1碗)","480"],
+ ["麻辣烫(1份)","550"],["炸鸡(2块)","450"],["薯条(中份)","340"],["奶茶(500ml)","400"],
+ ["可乐(330ml)","139"],["黑咖啡(无糖)","5"],["沙拉(油醋汁)","150"],["蛋白粉(1勺)","120"]
+],
+饮食:{
+ 早餐:[
+   {n:"无糖希腊酸奶碗",d:"希腊酸奶150g + 蓝莓50g + 奇亚籽5g",k:210,p:"高蛋白 · 促饱腹"},
+   {n:"全麦鸡蛋三明治",d:"全麦吐司2片 + 水煮蛋2个 + 生菜番茄",k:290,p:"优质碳水+蛋白"},
+   {n:"燕麦蛋白粥",d:"即食燕麦40g + 脱脂牛奶200ml + 乳清蛋白1勺",k:280,p:"低GI · 稳血糖"},
+   {n:"水煮蛋 + 玉米 + 黑豆浆",d:"鸡蛋2个 + 玉米半根 + 无糖黑豆浆300ml",k:310,p:"经典减脂搭配"},
+   {n:"牛油果全麦吐司",d:"全麦吐司1片 + 牛油果1/4 + 水波蛋1个",k:250,p:"健康脂肪来源"},
+  ],
+ 午餐:[
+   {n:"鸡胸肉杂蔬碗",d:"鸡胸150g + 西兰花/胡萝卜/紫甘蓝 200g + 糙米80g",k:430,p:"高蛋白 · 高纤维"},
+   {n:"香煎龙利鱼套餐",d:"龙利鱼200g + 蒸南瓜150g + 清炒时蔬",k:390,p:"低脂高蛋白"},
+   {n:"牛肉彩椒藜麦饭",d:"瘦牛肉120g + 彩椒 + 藜麦100g",k:450,p:"补铁 · 持久饱腹"},
+   {n:"虾仁豆腐煲",d:"虾仁100g + 嫩豆腐1盒 + 菌菇 + 杂粮饭60g",k:400,p:"低卡 · 高钙"},
+   {n:"荞麦凉面鸡丝",d:"荞麦面80g + 鸡丝100g + 黄瓜丝海带丝",k:410,p:"清爽不腻"},
+  ],
+ 晚餐:[
+   {n:"清蒸鲈鱼 + 焯青菜",d:"鲈鱼200g + 上海青200g（少油少盐）",k:280,p:"清淡易消化"},
+   {n:"番茄豆腐汤 + 蛋白",d:"番茄2个 + 豆腐1盒 + 水煮蛋2个",k:260,p:"低卡饱腹"},
+   {n:"金枪鱼蔬菜沙拉",d:"水浸金枪鱼100g + 混合生菜 + 油醋汁",k:240,p:"晚间轻食"},
+   {n:"菌菇鸡胸汤",d:"鸡胸120g + 各类菌菇 + 冬瓜",k:250,p:"暖胃低脂"},
+   {n:"白灼虾 + 芦笋",d:"基围虾200g + 芦笋150g",k:230,p:"高蛋白零负担"},
+  ]
+},
+运动:[
+ {n:"全身燃脂 20 分钟",d:"开合跳3组×30 + 深蹲3组×20 + 登山跑3组×30秒 + 平板支撑3组×40秒",lv:"中强度 · 约180大卡"},
+ {n:"腹部塑形 15 分钟",d:"卷腹3组×20 + 俄罗斯转体3组×30 + 仰卧抬腿3组×15 + 平板支撑3组×45秒",lv:"中强度 · 约130大卡"},
+ {n:"臀腿塑造 18 分钟",d:"深蹲4组×25 + 臀桥4组×25 + 弓步蹲3组×16 + 侧卧抬腿3组×20",lv:"中强度 · 约160大卡"},
+ {n:"上肢线条 15 分钟",d:"标准俯卧撑4组×力竭 + 跪姿俯卧撑3组×12 + 派克俯卧撑3组×10 + 臂屈伸3组×12",lv:"中强度 · 约140大卡"},
+ {n:"拉伸放松 10 分钟",d:"颈肩拉伸 + 猫牛式 + 婴儿式 + 下犬式 + 坐姿体前屈，每动作保持40秒",lv:"低强度 · 恢复日"},
+ {n:"HIIT 跳绳 12 分钟",d:"跳绳40秒/休息20秒 × 12轮（无绳跳跃亦可）",lv:"高强度 · 约200大卡"},
+ {n:"核心 + 心肺 25 分钟",d:"波比跳4组×12 + 高抬腿4组×40秒 + 死虫式4组×20 + 侧平板3组×30秒/侧",lv:"高强度 · 约230大卡"},
+ {n:"办公室微运动 8 分钟",d:"靠墙静蹲2组×60秒 + 肩颈绕环 + 提踵30次×3 + 站姿扩胸拉伸",lv:"低强度 · 随时可做"},
+],
+新闻:{
+ 科技:[
+   {t:"端侧 AI 芯片进入量产阶段",d:"手机与可穿戴设备可在本地完成大模型推理，隐私与续航同步改善，产业链进入密集备货期。"},
+   {t:"折叠屏铰链成本持续下探",d:"国产供应链良率提升，折叠屏整机价格带下移，中端市场渗透率有望翻倍。"},
+   {t:"卫星直连通信加速普及",d:"多款旗舰机型支持卫星消息，应急通信从高端专属走向大众标配。"},
+   {t:"具身智能机器人进入工厂试点",d:"在分拣、质检等标准化场景实现小批量部署，人机协作安全标准同步立项。"},
+   {t:"开源大模型推理成本再降",d:"量化与稀疏化技术成熟，单卡部署门槛下降，中小团队可低成本自建应用。"}
+  ],
+ 财经:[
+   {t:"LPR 维持不变，市场预期平稳",d:"中长期资金价格保持稳定，机构普遍认为政策进入观察期，重在存量政策落地。"},
+   {t:"居民储蓄意愿边际回落",d:"消费与理财配置需求回升，低波动固收类产品申购量明显增加。"},
+   {t:"黄金价格高位震荡",d:"避险与降息预期交织，机构建议个人配置比例控制在总资产的10%以内。"},
+   {t:"新能源车出口保持高增",d:"海外渠道与本地化产能同步推进，零部件企业订单能见度提升。"},
+   {t:"REITs 扩容至消费基础设施",d:"为商业地产提供退出通道，长期资金配置工具进一步丰富。"}
+  ],
+ 生活:[
+   {t:"“轻断食”成为都市人新选择",d:"16:8 进食法讨论热度上升，营养师提醒需保证蛋白质与微量元素摄入。"},
+   {t:"城市公园 15 分钟可达率提升",d:"口袋公园与绿道网络加密，步行友好度成为社区评价新指标。"},
+   {t:"睡眠经济规模持续扩张",d:"助眠香薰、白噪音、褪黑素之外，作息规律被公认为最有效的干预手段。"},
+   {t:"自带杯与环保消费习惯普及",d:"多家连锁品牌推出折扣激励，一次性塑料使用量明显下降。"},
+   {t:"社区食堂覆盖年轻群体",d:"平价套餐+明厨亮灶，成为上班族午餐的性价比之选。"}
+  ],
+ 娱乐:[
+   {t:"现实题材剧集口碑走高",d:"聚焦普通人的职业与生活，观众对真实质感的偏好明显增强。"},
+   {t:"演出市场持续回暖",d:"音乐节与剧场演出排期密集，周边文旅消费被明显带动。"},
+   {t:"短剧走向精品化",d:"制作成本与叙事质量同步提升，题材从爽感向现实与悬疑扩展。"},
+   {t:"播客听众规模扩大",d:"通勤与家务场景成为主要收听时段，知识类与访谈类节目增长最快。"},
+   {t:"国产动画电影工业化提速",d:"技术管线标准化，IP 系列化开发成为行业共识。"}
+  ],
+ 时政:[
+   {t:"稳就业政策持续加码",d:"面向高校毕业生与重点群体的岗位供给与技能培训同步扩大。"},
+   {t:"消费品以旧换新持续推进",d:"家电、汽车等领域补贴落地，带动绿色消费与产业升级。"},
+   {t:"基层医疗能力建设提速",d:"县域医共体与远程诊疗覆盖范围扩大，分级诊疗进一步落地。"},
+   {t:"新职业目录持续更新",d:"人工智能训练师、数字化解决方案设计师等岗位获得官方认定。"},
+   {t:"绿色低碳转型稳步推进",d:"重点行业碳排核算标准细化，企业 ESG 披露要求逐步规范。"}
+  ]
+},
+书籍:{
+ "1月":[{n:"《认知觉醒》",a:"周岭",t:["认知科学","自我管理"],d:"从大脑三重结构出发，讲清焦虑的根源，给出低成本可执行的成长路径。"},
+      {n:"《微习惯》",a:"斯蒂芬·盖斯",t:["习惯","行动力"],d:"把目标缩到小得不可能失败，用极低门槛撬动持续行动。"}],
+ "2月":[{n:"《被讨厌的勇气》",a:"岸见一郎",t:["心理学","阿德勒"],d:"以对话体讲课题分离，教你把他人的评价还给他人。"},
+      {n:"《非暴力沟通》",a:"马歇尔·卢森堡",t:["沟通","关系"],d:"观察—感受—需要—请求四步法，让表达不带攻击性。"}],
+ "3月":[{n:"《纳瓦尔宝典》",a:"埃里克·乔根森",t:["财富","杠杆"],d:"财富来自可复制的杠杆与独特专长，而非出卖时间。"},
+      {n:"《穷查理宝典》",a:"查理·芒格",t:["思维模型","投资"],d:"多元思维模型与逆向思考，构建长期决策的底层框架。"}],
+ "4月":[{n:"《深度工作》",a:"卡尔·纽波特",t:["专注","效率"],d:"在碎片化时代守住大块注意力，是稀缺且高价值的能力。"},
+      {n:"《番茄工作法图解》",a:"诺特伯格",t:["时间管理","方法"],d:"25分钟专注+5分钟休息，把大任务切成可完成的单元。"}],
+ "5月":[{n:"《也许你该找个人聊聊》",a:"洛莉·戈特利布",t:["心理","疗愈"],d:"心理咨询师的真实记录，看见每个人都有的挣扎与韧性。"},
+      {n:"《活出生命的意义》",a:"维克多·弗兰克尔",t:["意义","韧性"],d:"在极端处境中，人依然有选择态度的自由。"}],
+ "6月":[{n:"《学会提问》",a:"尼尔·布朗",t:["批判思维","逻辑"],d:"识别论题、结论与理由，不被情绪化的表达牵着走。"},
+      {n:"《思考，快与慢》",a:"丹尼尔·卡尼曼",t:["行为经济","决策"],d:"系统1与系统2的博弈，解释你为什么总在关键处犯错。"}],
+ "7月":[{n:"《原子习惯》",a:"詹姆斯·克利尔",t:["习惯","系统"],d:"身份认同驱动行为，让好习惯自然发生、坏习惯变难。"},
+      {n:"《心流》",a:"米哈里",t:["专注","幸福"],d:"挑战与技能匹配时的沉浸状态，是幸福感的直接来源。"}],
+ "8月":[{n:"《小狗钱钱》",a:"博多·舍费尔",t:["理财","入门"],d:"用故事讲清储蓄、复利与梦想账户，零基础理财第一课。"},
+      {n:"《指数基金投资指南》",a:"银行螺丝钉",t:["投资","基金"],d:"定投指数基金的完整方法论，适合长期主义的普通投资者。"}],
+ "9月":[{n:"《生命3.0》",a:"迈克斯·泰格马克",t:["科技","未来"],d:"AI 时代人类的选择空间与伦理边界，理解技术趋势的必读。"},
+      {n:"《失控》",a:"凯文·凯利",t:["系统","趋势"],d:"分布式、自组织与涌现，预见互联网与生态型组织的演化。"}],
+ "10月":[{n:"《活得通透》",a:"中村恒子",t:["生活","心态"],d:"把期待放低，把人生活得简单，减少内耗的智慧。"},
+       {n:"《当下的力量》",a:"埃克哈特·托利",t:["正念","觉察"],d:"痛苦多来自对过去与未来的执念，回到此刻即得安宁。"}],
+ "11月":[{n:"《影响力》",a:"罗伯特·西奥迪尼",t:["心理","说服"],d:"互惠、承诺、社会认同等六大原理，看懂营销与人际互动。"},
+       {n:"《原则》",a:"瑞·达利欧",t:["决策","管理"],d:"把经验沉淀为可复用的原则系统，用系统对抗情绪。"}],
+ "12月":[{n:"《一年顶十年》",a:"剽悍一只猫",t:["成长","复盘"],d:"时间、状态、人脉的复合增长方法，适合年末复盘。"},
+       {n:"《复盘》",a:"陈中",t:["复盘","方法"],d:"把经历转化为能力的闭环流程：回顾、分析、提炼、行动。"}]
+},
+理财:[
+ {n:"先建应急金，再谈投资",d:"预留3–6个月生活开支，放在货币基金或活期，作为一切规划的地基。",t:"第1步"},
+ {n:"记账是理财的起点",d:"按月分类统计，找出可优化的20%非必要支出，比盲目省钱更有效。",t:"第2步"},
+ {n:"理解复利，越早越好",d:"每月定投1000元、年化6%，30年后约100万。时间是普通人最大的杠杆。",t:"认知"},
+ {n:"先还高息负债",d:"信用卡、消费贷年化普遍高于10%，优先级高于绝大多数理财收益。",t:"风控"},
+ {n:"定投指数基金",d:"宽基指数长期胜率较高，用定投平滑波动，避免择时焦虑。",t:"工具"},
+ {n:"分散配置，不押单一资产",d:"现金、债券、权益、黄金按风险承受力分散，降低单一波动冲击。",t:"配置"},
+ {n:"拒绝“稳赚不赔”",d:"任何承诺保本高收益的，基本可以判定为骗局，收益永远与风险匹配。",t:"避坑"},
+ {n:"保险先保大风险",d:"优先配置百万医疗与定期寿险，用小保费覆盖极端风险，而非追求理财型保险。",t:"保障"},
+ {n:"自动扣款，减少意志力消耗",d:"发薪日次日自动划转储蓄，先存后花，比月末剩多少存多少更有效。",t:"技巧"},
+ {n:"每年复盘一次资产表",d:"列清资产与负债，计算净资产变化，用数据校准下一年的策略。",t:"复盘"}
+],
+信息差:[
+ {t:"AI 标注与数据清洗",c:"副业",d:"大模型训练需要大量人工标注、清洗、评估。门槛低、结算快，适合碎片时间。常见渠道为众包平台与海外数据标注平台。",m:"时薪30–80元 · 时间灵活"},
+ {t:"本地生活探店内容",c:"副业",d:"用手机拍摄3–5分钟探店短视频，挂团购链接赚佣金。单条爆款的长期佣金可观。",m:"无成本起步 · 需持续更新"},
+ {t:"外贸独立站代运营",c:"兼职",d:"中小企业缺懂海外投放与独立站搭建的人手。掌握 Shopify + 基础 SEO 即可接单。",m:"单店月费3000–8000元"},
+ {t:"知识付费课程分销",c:"副业",d:"主流知识平台开放分销，佣金30%–50%，核心是选对与你受众匹配的课程。",m:"佣金30%+ · 靠流量"},
+ {t:"银发族数字生活陪练",c:"兼职",d:"教老人用手机、挂号、网购、防诈骗。社区与线上均可开展，口碑传播极快。",m:"单次50–150元"},
+ {t:"二手闲置鉴定与代卖",c:"副业",d:"在数码、潮玩、奢侈品领域具备鉴别能力即可赚差价与代卖服务费。",m:"差价+10%–20%佣金"},
+ {t:"宠物上门喂养/遛狗",c:"兼职",d:"节假日需求爆发，服务半径内建立信任后复购率极高。",m:"单次40–120元"},
+ {t:"AI 工具工作流定制",c:"创业",d:"为中小企业搭建 AI 客服、文档处理、内容生产流水线。轻资产、高毛利。",m:"单项目5000–30000元"},
+ {t:"垂直领域 Newsletter",c:"创业",d:"深耕小众行业（如跨境物流、独立开发者），做付费订阅，规模不大但利润稳定。",m:"月订阅19–99元/人"},
+ {t:"本地老年助餐与配送",c:"创业",d:"结合社区食堂与配送，解决独居老人吃饭难题，可与社区合作降低场地成本。",m:"政策支持 · 现金流稳"},
+ {t:"可视化简历与作品集设计",c:"兼职",d:"求职季需求集中，掌握排版与故事线设计即可标准化交付。",m:"单份200–800元"},
+ {t:"跨境电商选品咨询",c:"兼职",d:"靠数据工具做选品分析，为中小卖家提供选品报告与供应链对接。",m:"单份报告500–3000元"}
+],
+修心:[
+ {n:"晨起静坐10分钟",d:"起床后不碰手机，专注呼吸，让心在一天开始前安静下来。"},
+ {n:"书写三件感恩小事",d:"无论多小，写下今天值得感谢的三件事，训练大脑关注已有而非缺失。"},
+ {n:"一次不带手机的行走",d:"15分钟纯行走，只看路与树，练习把注意力还给当下。"},
+ {n:"觉察一次情绪起伏",d:"当情绪升起时，标记它：这是愤怒/焦虑/委屈。命名即降维。"},
+ {n:"不说一句抱怨的话",d:"一整天不抱怨人、事、天气，把能量从指责转向解决。"},
+ {n:"睡前放下手机30分钟",d:"用阅读或拉伸替代刷屏，让神经系统从刺激中缓下来。"},
+ {n:"对一个人真心道谢",d:"具体说出对方做了什么让你受益，表达要落到细节。"},
+ {n:"完成一件拖延已久的小事",d:"拖延消耗的能量远大于做事本身，做完即完成一次内在清账。"},
+ {n:"呼吸练习 4-7-8",d:"吸气4秒、屏息7秒、呼气8秒，循环4轮，快速平复焦虑。"},
+ {n:"一天内不评判他人",d:"觉察内心的评判，只是看见，不跟随，练习松手。"}
+],
+自省:[
+ "今天我有没有把时间花在真正重要的事上？",
+ "今天让我最有情绪波动的一件事是什么？我在意的是什么？",
+ "今天我有没有因为害怕而选择逃避？如果重来，我会怎么做？",
+ "今天我对身边的人，是给予能量还是消耗能量？",
+ "今天我学到的一个新认知是什么？",
+ "如果今天重来一次，我会改变哪一个决定？",
+ "今天有什么事情，其实没有我想的那么严重？",
+ "我今天对自己的方式，像一个好朋友吗？",
+ "我把注意力交给了手机，还是交给了自己想做的事？",
+ "今天有没有一件小事，让我觉得值得？"
+],
+博客:[
+ {t:"把注意力当作最贵的资产来管理",a:"个人成长 · 认知",d:"信息过载的时代，注意力比时间更稀缺。本文给出三层过滤法：删除无信息量输入、限定信息入口、为深度工作预留整块时间。",r:"8 min"},
+ {t:"我如何用 90 天重建一套生活系统",a:"习惯 · 系统",d:"从睡眠、运动、饮食、复盘四个维度搭最小可运行系统，用月度复盘的单一指标替代复杂的自律计划。",r:"11 min"},
+ {t:"普通人做副业，先想清楚这三件事",a:"副业 · 商业化",d:"现金流周期、可复制的交付、与你主业的协同性。三者缺一，副业很难长期持续。",r:"7 min"},
+ {t:"为什么你一直在学习，却没什么变化",a:"学习 · 方法",d:"输入不等于掌握。缺少输出、反馈与场景迁移，学习就只是信息收集。文末附一套最小输出闭环。",r:"9 min"},
+ {t:"极简生活半年后，我的三个真实变化",a:"生活 · 极简",d:"减少物品之后，决策成本显著下降；消费冲动变弱；对时间的感知变长了。",r:"6 min"},
+ {t:"情绪稳定是可以练出来的",a:"心理 · 情绪",d:"通过命名情绪、延迟反应、身体调节三条路径，把情绪反应的窗口从3秒拉长到30秒。",r:"10 min"},
+ {t:"长期主义的真相：不是熬，而是复利",a:"思维 · 长期",d:"长期主义的关键在于让每一次投入都可累积，而不是单纯地忍。选对可累积的事，才有复利。",r:"8 min"},
+ {t:"一个人如何建立自己的知识体系",a:"知识管理",d:"以问题为索引而非以资料为索引。先有问题清单，再有笔记与归档，知识才会被调用。",r:"12 min"},
+ {t:"存下第一个十万之后，我明白了什么",a:"理财 · 金钱观",d:"存钱真正改变的不仅是账户数字，更是对不确定性的容忍度与选择权。",r:"7 min"},
+ {t:"早起一年后，我放弃了这个执念",a:"作息 · 反思",d:"早起不是目的，稳定的作息节律才是。适合自己的时区，比跟风早起更有价值。",r:"6 min"}
+],
+/* 每日穿搭灵感：风格标签体系 + 天气 → 穿搭规则 */
+穿搭风格:[
+ {k:'休闲',e:'🧢'},{k:'通勤',e:'💼'},{k:'运动',e:'🏃'},{k:'甜美',e:'🎀'},
+ {k:'酷感',e:'🖤'},{k:'文艺',e:'📖'},{k:'复古',e:'📻'},{k:'极简',e:'⬜'}
+],
+穿搭色系:[
+ {k:'中性色',e:'⚪',c:'#D9D2C7'},{k:'大地色',e:'🟤',c:'#D9BC9A'},{k:'莫兰迪',e:'🩶',c:'#C9C3CE'},
+ {k:'亮色点缀',e:'🟡',c:'#EFC88B'},{k:'黑白灰',e:'⚫',c:'#9A9A9A'},{k:'低饱和彩',e:'🔵',c:'#A9B8E8'}
+],
+穿搭品类:[
+ {n:'T恤',e:'👕',s:'上装'},{n:'衬衫',e:'👔',s:'上装'},{n:'针织衫',e:'🧶',s:'上装'},
+ {n:'卫衣',e:'🧥',s:'上装'},{n:'外套',e:'🧥',s:'外搭'},{n:'风衣',e:'🧥',s:'外搭'},
+ {n:'大衣',e:'🧥',s:'外搭'},{n:'羽绒服',e:'🧥',s:'外搭'},{n:'短裤',e:'🩳',s:'下装'},
+ {n:'长裤',e:'👖',s:'下装'},{n:'牛仔裤',e:'👖',s:'下装'},{n:'半身裙',e:'👗',s:'下装'},
+ {n:'连衣裙',e:'👗',s:'连身'},{n:'运动鞋',e:'👟',s:'鞋履'},{n:'皮鞋',e:'👞',s:'鞋履'},
+ {n:'靴子',e:'🥾',s:'鞋履'},{n:'帽子',e:'🧢',s:'配饰'},{n:'围巾',e:'🧣',s:'配饰'},
+ {n:'墨镜',e:'🕶️',s:'配饰'},{n:'包袋',e:'👜',s:'配饰'}
+],
+树洞:[]
+};
+
+/* =========================================================
+   模块定义（顺序不可调整）
+   ========================================================= */
+const MODULES=[
+ {k:'灵感', ico:'💡', name:'每日灵感',   sub:'今日一句 · 随手记录'},
+ {k:'口语', ico:'📖', name:'英语阅读',   sub:'资讯阅读 · 口语跟读'},
+ {k:'饮食', ico:'🥗', name:'减脂饮食',   sub:'三餐示例 · 热量统计'},
+ {k:'运动', ico:'🏃', name:'运动塑形',   sub:'打卡日历 · 训练计划'},
+ {k:'新闻', ico:'📰', name:'热点新闻',   sub:'五大分类 · 资讯摘要'},
+ {k:'书籍', ico:'📚', name:'书籍推荐',   sub:'按月书单 · 标签简介'},
+ {k:'理财', ico:'💰', name:'理财存钱',   sub:'入门技巧 · 进度可视化'},
+ {k:'信息差',ico:'🧭',name:'赚钱信息差', sub:'副业兼职 · 创业干货'},
+ {k:'修心', ico:'🧘', name:'修心修行',   sub:'正念清单 · 每日自省'},
+ {k:'博客', ico:'✍️', name:'博客精选',   sub:'成长好文 · 摘要速览'},
+ {k:'穿搭', ico:'👗', name:'每日穿搭',   sub:'天气穿搭 · 历史风格'},
+ {k:'树洞', ico:'🌙', name:'我的树洞',   sub:'仅存本地 · 绝对私密'},
+];
+
+/* =========================================================
+   渲染器
+   ========================================================= */
+const R={};
+
+/* ① 每日灵感 */
+R.灵感=()=>{
+  const quotes=D.灵感;
+  const idx=LS.get('qidx',null);
+  const tk=todayKey();
+  let cur=idx;
+  if(!cur||cur.d!==tk){cur={d:tk,i:(Math.random()*quotes.length)|0};LS.set('qidx',cur)}
+  const notes=LS.get('inspire',[]);
+  return `
+  <div class="head"><h1>💡 每日灵感</h1><p>每天一句，给心一点向上的力</p></div>
+  <div class="card tint" style="--acc:${PASTEL[2].acc};--bgc:${PASTEL[2].bgc}">
+    <h2>今日金句 <span class="badge" id="qbadge">随机一句</span></h2>
+    <div class="quote" id="qtext">${esc(quotes[cur.i])}</div>
+    <div class="hr"></div>
+    <button class="btn wide" id="qnext">🔄 换一句</button>
+  </div>
+  <div class="card">
+    <h2>灵感随手记 <span class="badge">${notes.length} 条</span></h2>
+    <textarea class="ta" id="ins" placeholder="写下此刻的念头、灵感、想做的事…"></textarea>
+    <div class="hr"></div>
+    <button class="btn pri wide" style="--acc:${PASTEL[2].acc};--accs:${PASTEL[2].accs}" id="inssave">保存到本地</button>
+  </div>
+  <div class="card">
+    <h2>我的灵感记录</h2>
+    <div id="inslist">${notes.length?notes.map((n,i)=>`
+      <div class="note">
+        <div class="nt">${esc(n.t)}<span class="del" data-del="${i}">✕</span></div>
+        <div class="nc">${esc(n.c)}</div>
+      </div>`).join(''):'<div class="empty">还没有记录，写下第一条吧 ✍️</div>'}</div>
+  </div>`;
+};
+
+/* ② 英语口语 */
+R.口语=()=>{
+  /* 打卡状态为"按日"数据：每天刷新，已完成项汇总展示 */
+  const spkLog=dayDone('speak');
+  const done=spkLog.k;
+  const n=Object.keys(done).length;
+  const list=enSpeaks();        /* 今日口语轮换顺序 */
+  const reads=enReads();        /* 今日资讯推荐顺序（每日刷新） */
+  const rdLog=dayDone('readdone');
+  const rdone=rdLog.k;
+  const rn=Object.keys(rdone).length;
+  const cat=LS.get('readcat','全部');
+  const cats=['全部',...new Set(D.英语阅读.map(r=>r.cat))];
+  const view=cat==='全部'?reads:reads.filter(r=>r.cat===cat);
+  /* 已完成折叠：把今日已读/已打卡的条目收进汇总，不再铺满列表 */
+  const hideDone=LS.get('hideDone',true);
+  const readPending=view.filter(r=>!rdone[readIdx(r)]);
+  const readShown=hideDone?readPending:view;
+  const readDoneList=view.filter(r=>rdone[readIdx(r)]);
+  const spkPending=list.filter(s=>!done[s.en]);
+  const spkShown=hideDone?spkPending:list;
+  const spkDoneList=list.filter(s=>done[s.en]);
+  /* 生词本 */
+  const vbook=LS.get('vocab',[]);
+  const vmap={};vbook.forEach(v=>vmap[v.k]=v);
+  const wk=weekKey();
+  const starred=(vbook.filter(v=>(v.starWeek||'')===wk)).length;
+  const needReview=vbook.filter(v=>!v.mastered).length;
+  const pmap={};vbook.forEach(v=>pmap[v.k]=v);
+  const vfilter=LS.get('vfilter','all');
+  const wmode=LS.get('wmode','mix');
+  let vshow=vbook;
+  if(vfilter==='week')vshow=vbook.filter(v=>(v.starWeek||'')===wk);
+  else if(vfilter==='todo')vshow=vbook.filter(v=>!v.mastered);
+  else if(vfilter==='done')vshow=vbook.filter(v=>v.mastered);
+  /* 每周复习抽题：以词条 k 为种子，保证同一天题目稳定 */
+  let quizPool=vbook;
+  if(wmode==='week')quizPool=vbook.filter(v=>(v.starWeek||'')===wk);
+  const qseed=vbook.length;
+  quizPool=quizPool.slice().sort((a,b)=>((a.k.charCodeAt(0)*7+qseed)%13)-((b.k.charCodeAt(0)*7+qseed)%13));
+  const quizList=quizPool.slice(0,Math.min(6,quizPool.length));
+  const quizDone=LS.get('quizDone',{});
+  return `
+  <div class="head"><h1>📖 英语资讯与口语</h1><p>短篇英文资讯阅读 + 口语跟读打卡 · 每日刷新</p></div>
+
+  <div class="grid2" style="margin-bottom:10px">
+    <div class="stat" style="background:${PASTEL[3].bgc}"><b style="color:${PASTEL[3].acc}">${rn}/${reads.length}</b><span>今日资讯已读</span></div>
+    <div class="stat" style="background:${PASTEL[0].bgc}"><b style="color:${PASTEL[0].acc}">${n}/${list.length}</b><span>今日口语已打卡</span></div>
+  </div>
+
+  <div class="card tint" style="--acc:${PASTEL[3].acc};--bgc:${PASTEL[3].bgc}">
+    <h2>阅读模块 <span class="badge">${Math.round(rn/reads.length*100)}%</span></h2>
+    <div class="bar"><i style="--acc:${PASTEL[3].acc};width:${rn/reads.length*100}%"></i></div>
+    <div class="mini">均为 3 句以内短篇，覆盖新闻与娱乐。先读英文，再看中文对照与生词。顺序与打卡状态每日刷新 🔄</div>
+    <div class="hr"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+      <span class="mini" style="margin:0">${readPending.length?('📌 待读 '+readPending.length+' 篇'):'🎉 今日资讯已全部读完'}</span>
+      <button class="btn sm" data-hidedone="${hideDone?'0':'1'}">${hideDone?'👁 显示已完成':'🙈 收起已完成'}</button>
+    </div>
+    ${readDoneList.length?`<div class="mini" style="margin:8px 0 0;color:#9A9A9A">今日已完成 ${readDoneList.length} 篇：${readDoneList.map(r=>esc(r.title)).join(' · ')}</div>`:''}
+  </div>
+
+  <div style="margin-bottom:9px;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none" id="readtabs">
+    ${cats.map(c=>`<span class="pill" data-rcat="${c}" style="${c===cat?`background:${PASTEL[3].acc};color:#fff`:''}">${c}</span>`).join('')}
+  </div>
+
+  <div id="readlist">${readShown.length?readShown.map(r=>{
+    const i=readIdx(r), on=!!rdone[i];
+    return `<div class="card" style="--acc:${PASTEL[3].acc}">
+      <h2><span style="flex:1 1 auto;min-width:0">${esc(r.title)}</span><span class="badge" style="background:${PASTEL[3].tg}">${esc(r.cat)}·${esc(r.tag)}</span></h2>
+      <div style="font-size:10.5px;color:#9A9A9A;margin:-4px 0 7px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        <span>来源 · ${esc(r.src||'未标注')}</span>
+        ${r.url?`<a href="${esc(r.url)}" style="color:${PASTEL[3].acc};font-weight:700;text-decoration:none">阅读原文 →</a>`:''}
+      </div>
+      <div style="font-size:13.5px;line-height:1.72;font-weight:600;color:#3A3A3A" id="ren${i}">${esc(r.en)}</div>
+      <div class="hr"></div>
+      <button class="btn sm" data-trans="${i}">🌐 显示中文对照</button>
+      <div id="rcn${i}" style="display:none;margin-top:8px;font-size:12px;color:#6B6B6B;line-height:1.75">${esc(r.cn)}</div>
+      <div class="hr"></div>
+      <div class="mini" style="margin-bottom:5px">📌 生词 · 点击可收藏</div>
+      <div>${r.words.map(w=>{
+        const k='w|'+w[0], has=!!vmap[k];
+        return `<span class="tag" data-wadd="${esc(w[0])}|${esc(w[1])}|${i}" style="background:${has?PASTEL[3].acc:PASTEL[3].tg};color:${has?'#fff':'inherit'};cursor:pointer">${has?'✓ ':''}${esc(w[0])} · ${esc(w[1])}</span>`}).join('')}</div>
+      <div class="hr"></div>
+      <div class="mini" style="margin-bottom:5px">❓ 理解小测</div>
+      <details class="fold" style="margin-bottom:0;--acc:${PASTEL[3].acc}">
+        <summary style="font-size:12.5px;font-weight:600"><span>${esc(r.q)}</span><span class="arw">▶</span></summary>
+        <div class="body"><div class="mini">读完英文原文后，试着用一句英文回答，再对照中文理解要点。</div></div>
+      </details>
+      <div style="display:flex;gap:6px;margin-top:9px;flex-wrap:wrap">
+        <button class="btn sm" data-rread="${i}">🔊 朗读全文</button>
+        <button class="btn sm ${on?'pri':''}" style="--acc:${PASTEL[3].acc};--accs:${PASTEL[3].accs}" data-rdone="${i}">${on?'✅ 已读':'⭕ 标记已读'}</button>
+      </div>
+    </div>`}).join(''):'<div class="empty">🎉 今日资讯已全部读完，明天将刷新新一批顺序</div>'}</div>
+
+  <div class="card tint" style="--acc:${PASTEL[7].acc};--bgc:${PASTEL[7].bgc};margin-top:12px">
+    <h2>📒 生词与短语归纳 <span class="badge">${vbook.length} 条</span></h2>
+    <div class="kv"><b style="color:${PASTEL[7].acc}">${starred}</b><span>本周新增 · ${weekRange()}</span></div>
+    <div class="bar"><i style="--acc:${PASTEL[7].acc};width:${vbook.length?starred/vbook.length*100:0}%"></i></div>
+    <div class="mini">${vbook.length===0?'点击上方阅读卡里的生词标签，即可收藏到这里。':(needReview===0?'🎉 所有收藏词条均已掌握，保持复习节奏。':'还有 '+needReview+' 条待掌握，建议本周复习完。')}</div>
+    <div class="hr"></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <button class="btn sm" data-vfilter="all" style="${vfilter==='all'?'background:'+PASTEL[7].acc+';color:#fff':''}">全部</button>
+      <button class="btn sm" data-vfilter="week" style="${vfilter==='week'?'background:'+PASTEL[7].acc+';color:#fff':''}">本周新增</button>
+      <button class="btn sm" data-vfilter="todo" style="${vfilter==='todo'?'background:'+PASTEL[7].acc+';color:#fff':''}">待掌握</button>
+      <button class="btn sm" data-vfilter="done" style="${vfilter==='done'?'background:'+PASTEL[7].acc+';color:#fff':''}">已掌握</button>
+    </div>
+  </div>
+
+  <div id="vlist">${vshow.length?vshow.map(v=>`
+    <div class="note" style="border-radius:12px">
+      <div class="nt" style="font-size:11px">
+        <b style="color:#3A3A3A">${esc(v.e)}</b>
+        <span style="color:#9A9A9A">${esc(v.cn)}</span>
+        <span class="del" data-vdel="${esc(v.k)}">✕</span>
+      </div>
+      ${v.eg?`<div style="font-size:11.5px;color:#9A9A9A;line-height:1.6;font-style:italic">${esc(v.eg)}</div>`:''}
+      <div style="display:flex;gap:6px;margin-top:7px;flex-wrap:wrap">
+        <span class="tag" style="background:${PASTEL[7].tg};margin:0">${esc(v.cat||'生词')}</span>
+        <button class="btn sm" style="padding:4px 9px;font-size:10.5px" data-vsay="${esc(v.e)}">🔊</button>
+        <button class="btn sm" style="padding:4px 9px;font-size:10.5px;${v.mastered?'background:'+PASTEL[0].acc+';color:#fff':''}" data-vmaster="${esc(v.k)}">${v.mastered?'✅ 已掌握':'⬜ 标记掌握'}</button>
+      </div>
+    </div>`).join(''):'<div class="empty">该筛选下暂无词条</div>'}</div>
+
+  <div class="card" style="--acc:${PASTEL[7].acc};margin-top:10px">
+    <h2>🗓 每周复习 <span class="badge">${weekRange()}</span></h2>
+    <div class="mini" style="margin-bottom:8px">从生词本中抽取本周需复习的词条，逐条自测后再揭晓答案。</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+      <button class="btn sm" data-weekmode="mix" style="${wmode==='mix'?'background:'+PASTEL[7].acc+';color:#fff':''}">🎲 随机抽测</button>
+      <button class="btn sm" data-weekmode="week" style="${wmode==='week'?'background:'+PASTEL[7].acc+';color:#fff':''}">📅 本周新增</button>
+      <button class="btn sm" data-weekmode="all" style="${wmode==='all'?'background:'+PASTEL[7].acc+';color:#fff':''}">📚 全部词条</button>
+    </div>
+    <div class="hr"></div>
+    <div id="quiz">${quizList.length?quizList.map((v,qi)=>{
+      const rev=!!quizDone[v.k];
+      return `<div class="card" style="background:${PASTEL[3].bgc};margin-bottom:8px;box-shadow:none;border:1px solid ${PASTEL[3].tg}">
+        <div class="mini" style="margin-bottom:5px">第 ${qi+1} / ${quizList.length} 题</div>
+        <div style="font-size:13.5px;font-weight:700;line-height:1.5">${esc(v.e)}</div>
+        <div class="hr"></div>
+        ${rev?`<div style="font-size:12.5px;color:#6B6B6B;line-height:1.7">📖 ${esc(v.cn)}</div>
+          ${v.eg?`<div style="font-size:11.5px;color:#9A9A9A;margin-top:5px;font-style:italic">${esc(v.eg)}</div>`:''}`
+        :`<div class="mini">先在心里回想它的中文含义，再点下方按钮揭晓。</div>`}
+        <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+          <button class="btn sm" data-qsay="${esc(v.e)}">🔊 发音</button>
+          <button class="btn sm ${rev?'':'pri'}" style="--acc:${PASTEL[7].acc};--accs:${PASTEL[7].accs}" data-qrev="${esc(v.k)}">${rev?'🙈 收起答案':'👀 揭晓答案'}</button>
+          ${rev?`<button class="btn sm" data-qok="${esc(v.k)}">✅ 记住了</button>`:''}
+        </div>
+      </div>`}).join(''):'<div class="empty">生词本还是空的，先去上方阅读卡收藏几个词条吧 📌</div>'}</div>
+  </div>
+
+  <div class="card tint" style="--acc:${PASTEL[0].acc};--bgc:${PASTEL[0].bgc};margin-top:12px">
+    <h2>口语跟读打卡 <span class="badge">${Math.round(n/D.英语口语.length*100)}%</span></h2>
+    <div class="bar"><i style="--acc:${PASTEL[0].acc};width:${n/D.英语口语.length*100}%"></i></div>
+    <div class="mini">每个句子朗读 3 遍，注意重音与连读，读完点打卡 ✅（顺序与打卡状态每日刷新）</div>
+    <div class="hr"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+      <span class="mini" style="margin:0">${spkPending.length?('📌 待打卡 '+spkPending.length+' 句'):'🎉 今日口语已全部打卡'}</span>
+      <button class="btn sm" data-hidedone="${hideDone?'0':'1'}">${hideDone?'👁 显示已完成':'🙈 收起已完成'}</button>
+    </div>
+    ${spkDoneList.length?`<div class="mini" style="margin:8px 0 0;color:#9A9A9A">今日已打卡 ${spkDoneList.length} 句：${spkDoneList.map(s=>esc(s.en)).join(' · ')}</div>`:''}
+  </div>
+
+  <div id="spklist">${spkShown.length?spkShown.map((s,i)=>{
+    const on=!!done[s.en];
+    const k=esc(s.en);                       /* 以句子内容为键，跨天轮换后进度仍能对应 */
+    return `<div class="spk ${on?'done':''}" style="--bgc:${PASTEL[3].bgc}">
+      <div class="en">${esc(s.en)}</div>
+      <div class="cn">${esc(s.cn)}</div>
+      <div class="row">
+        <button class="btn sm" data-say="${list.indexOf(s)}">🔊 试听发音</button>
+        <button class="btn sm ${on?'pri':''}" style="--acc:${PASTEL[3].acc};--accs:${PASTEL[3].accs}" data-chk="${k}">${on?'✅ 已打卡':'⭕ 跟读打卡'}</button>
+        <button class="btn sm" data-padd="${list.indexOf(s)}">${pmap['p|'+s.en]?'✓ 已收藏':'＋ 收藏'}</button>
+        <span class="tip">${esc(s.tip)}</span>
+      </div>
+    </div>`}).join(''):'<div class="empty">🎉 今日口语已全部打卡，明天将刷新新一批顺序</div>'}</div>`;
+};
+
+/* ③ 减脂饮食 */
+R.饮食=()=>{
+  const tk=todayKey();
+  const log=readKcal();
+  const total=kcalTotal(log);
+
+  /* ── 体质档案 ── */
+  const PB=LS.get('body',null);
+  const filled=!!PB&&PB.height>0&&PB.weight>0&&PB.age>0;
+  /* 未填档案时用一组中性默认值占位，保证页面结构与文案都正常，但所有结果标记为"待填写" */
+  const P=filled?PB:{sex:'f',height:165,weight:60,age:28,act:'light',goal:'lose'};
+  const bmr=filled?calcBMR(P.sex,P.weight,P.height,P.age):0;
+  const act=ACT[P.act]||ACT.light;
+  const tdee=Math.round(bmr*act.f);
+  const bmi=calcBMI(P.weight,P.height);
+  const bt=bmiTag(bmi);
+  const [ilo,ihi]=idealRange(P.height||165);
+
+  /* 目标方向：减脂 / 保持 / 增肌
+     —— 减脂目标改按《成人肥胖食养指南》计算：
+        ① 先按消耗的 30%–50% 估缺口，再夹在 500–1000 kcal 区间
+        ② 同时夹在性别限能量区间（男 1200–1500 / 女 1000–1200）
+        ③ 不因公式偏差把目标压到基础代谢以下 */
+  const sexKey=P.sex==='m'?'m':'f';
+  const kcalRange=OFFICIAL.kcal[sexKey];
+  let adjust,target,clampedHigher=false,floorNote='';
+  if(P.goal==='lose'){
+    const byPct=Math.round(tdee*(1-OFFICIAL.pct[0]/100)/10)*10;
+    const byCut=tdee-OFFICIAL.cut[1];
+    target=Math.max(byPct,byCut);                      /* 取较保守的一方：缺口不超 50% 也不超 1000 */
+    target=Math.min(target,tdee-OFFICIAL.cut[0]);      /* 再确保缺口至少 500 */
+    /* 指南的「限能量平衡膳食」区间并非硬性上限：
+       体力活动大的人消耗高，1500 kcal 仍能形成充足缺口，不必强行压到这里。
+       因此只把它当参考下限，超出上限时给出提示而不截断。 */
+    if(target<OFFICIAL.kcal.f[0]){target=OFFICIAL.kcal.f[0];floorNote='low'}
+    /* 小个子 / 低消耗人群：限能量下限可能低于基础代谢，
+       此时抬高到 BMR（宁可缺口小一点，也不吃不够） */
+    if(target<bmr){target=bmr;clampedHigher=true}
+    target=Math.round(target/10)*10;
+    if(target>kcalRange[1])floorNote='high';
+    adjust=target/tdee-1;
+  }else{
+    adjust=P.goal==='gain'?0.12:0;
+    target=Math.round(tdee*(1+adjust)/10)*10;
+  }
+  const deficit=tdee-target;                    /* 热量缺口（正数为缺口） */
+  const pct=Math.min(100,Math.round(total/Math.max(1,target)*100));
+  const over=total-target;
+  /* 缺口 → 预期减重（1kg 脂肪 ≈ 7700 kcal） */
+  const weekLoss=deficit>0?Math.round(deficit*7/7700*100)/100:0;
+  const monthLoss=Math.round(weekLoss*4.3*10)/10;
+  const dayLeft=Math.max(0,target-total);       /* 今日还可摄入 */
+
+  /* 官方区间校验：本周减重速度是否落在 0.5–1kg（每月 2–4kg）
+     小个子被 BMR 兜底抬高时，缺口天然偏小，这属于合理区间，不算"偏慢" */
+  const lossInRange=(weekLoss>=OFFICIAL.lossWeek[0]&&weekLoss<=OFFICIAL.lossWeek[1])||clampedHigher;
+  const lossTag=!filled?'':(deficit<=0?'无缺口'
+    :(clampedHigher?'已按基础代谢保底，缺口 '+deficit+' kcal ✓'
+     :(weekLoss<OFFICIAL.lossWeek[0]?'偏慢，可略减 100–200 kcal'
+      :(weekLoss>OFFICIAL.lossWeek[1]?'偏快，建议放宽 200 kcal'
+       :'理想速度 ✓'))));
+
+  /* ── 三大营养素（按官方供能比中值：碳水55% / 脂肪25% / 蛋白20%）──
+     蛋白质同时参考体重 1.2–1.6g/kg，取两者较大值，避免掉肌肉 */
+  const proByPct=Math.round(target*0.20/4);
+  const proByKg=Math.round(P.weight*1.4);
+  const protein=Math.max(proByPct,proByKg);
+  const carbK=Math.round(target*0.55/4);
+  const fatK=Math.round(target*0.25/9);
+  const proPct=Math.round(protein*4/target*100);
+  const carbPct=Math.round(carbK*4/target*100);
+  const fatPct=Math.round(fatK*9/target*100);
+
+  /* ── 三餐供能比 3:4:3 ── */
+  const RATIO=[3,4,3];
+  const quotaOf=(i)=>Math.round(target*RATIO[i]/10/10)*10;
+
+  /* ── 今日地区与季节食谱 ── */
+  const regKey=(P.region&&REGION[P.region])?P.region:'hd';
+  const reg=REGION[regKey];
+  const season=seasonOf(new Date().getMonth()+1);
+  const seasonMenu=reg.s[season]||reg.s['春'];
+  /* 选最贴近目标热量的一档（1200/1400/1600） */
+  const menuIdx=(()=>{
+    let bi=0,bd=1e9;
+    seasonMenu.forEach((m,i)=>{const d=Math.abs(m.k-target);if(d<bd){bd=d;bi=i}});
+    return bi;
+  })();
+  const menu=seasonMenu[menuIdx];
+  /* 主食份量：指南里碳水主食一般 50g 生米上下，按目标热量同比缩放 */
+  const stapleG=Math.round(50*target/1400/5)*5||50;
+
+  /* ── 习惯打卡（按天存储）── */
+  const hab=dayDone('habit');
+  const hk=hab.k;
+  const water=hk.water||0;
+  const waterOK=water>=OFFICIAL.water[0];
+  const dinnerTime=hk.dinner||'';
+  const dinnerOK=(()=>{
+    if(!dinnerTime)return false;
+    const h=parseInt(String(dinnerTime).split(':')[0],10);
+    return h>=OFFICIAL.dinner[0]&&h<OFFICIAL.dinner[1];
+  })();
+  const orderOK=!!hk.order;
+
+  /* ── 后续餐食推荐引擎 ──
+     1) 按当前时间判断还剩哪几餐
+     2) 剩余额度按各餐权重分配
+     3) 从备选餐库挑选热量最接近的候选（同餐次不重复） */
+  const nowH=new Date().getHours();
+  /* 每餐的建议时段与权重：越晚的餐次占比越低，符合减脂节奏 */
+  const MEALPLAN=[
+    {m:'早餐',e:'🌅',from:0,to:10,w:.28},
+    {m:'午餐',e:'🌞',from:10,to:15,w:.36},
+    {m:'晚餐',e:'🌙',from:15,to:21,w:.28},
+    {m:'加餐',e:'🍎',from:0,to:24,w:.08}
+  ];
+  const remaining=target-total;                       /* 剩余可摄入额度 */
+  /* 已过时段且已记录过的餐次视为已完成 */
+  const passed=MEALPLAN.filter(x=>x.m!=='加餐'&&nowH>=x.to&&mealSum(log,x.m)>0).map(x=>x.m);
+  /* 待安排：还没到时段 或 到了但没记录 */
+  const todo=MEALPLAN.filter(x=>x.m!=='加餐'&&!passed.includes(x.m)&&(nowH<x.to));
+  /* 剩余额度按官方 3:4:3 的比例分摊到未完成的餐次 */
+  const ratioOf=m=>m==='早餐'?RATIO[0]:(m==='午餐'?RATIO[1]:RATIO[2]);
+  const used=new Set();                                  /* 跨餐次去重，保证推荐多样 */
+  const plan=todo.map(x=>{
+    const tw=todo.reduce((a,b)=>a+ratioOf(b.m),0)||1;
+    let quota=Math.round(remaining*ratioOf(x.m)/tw/10)*10;
+    quota=Math.max(80,quota);
+    /* 晚餐/加餐优先轻食，午餐/早餐优先正餐与轻食 */
+    const prefer=x.m==='晚餐'?['轻食','正餐']:['正餐','轻食'];
+    const fits=f=>f.k<=quota+80&&!used.has(f.n);
+    let pool=prefer.map(t=>D.备选餐.filter(f=>f.tag===t&&fits(f))).flat();
+    if(!pool.length)pool=D.备选餐.filter(fits);
+    if(!pool.length)pool=D.备选餐.filter(f=>f.tag==='加餐'&&!used.has(f.n));
+    const cand=pool.slice().sort((a,b)=>Math.abs(a.k-quota)-Math.abs(b.k-quota)).slice(0,2);
+    cand.forEach(c=>used.add(c.n));
+    return {meal:x.m,e:x.e,quota,cand};
+  });
+  /* 是否建议加餐：剩余额度够且距下一餐还久 */
+  const snackOK=remaining>200&&nowH>=14&&nowH<18;
+
+  /* ── 个性化推荐（宏量营养素已按央妈指南计算，此处只给运动方案） ── */
+  const recEx=(ACT[P.act].f>=1.55)
+   ?{many:'4–5 次 / 周',plan:'有氧 30 分钟 + 力量 20 分钟，穿插 1 天恢复日',ex:'全身燃脂 20 分钟 / HIIT 跳绳 12 分钟'}
+   :{many:'3 次 / 周',plan:'从低强度起步：快走或慢跑 25 分钟 + 基础力量 15 分钟',ex:'腹部塑形 15 分钟 / 拉伸放松 10 分钟'};
+  const advice=!filled
+   ?'请先填写身高、体重、年龄，即可自动计算你的专属热量缺口。'
+   :(P.goal==='lose'
+     ?(bmi<18.5?'⚠️ 当前体重偏轻，不建议继续减脂。建议把目标调整为「保持」，优先增加肌肉量。'
+      :(bmi>=28?'体质指数偏高，建议在保证蛋白质摄入的前提下，把缺口控制在 500 kcal 以内，循序渐进。'
+       :'当前体型在健康区间，按此缺口每周可稳定减 0.5kg 左右，是最不容易反弹的节奏。'))
+     :(P.goal==='gain'
+      ?'增肌期需要热量盈余，建议优先保证蛋白质与力量训练，每周增重 0.25kg 为佳，避免脂肪堆积。'
+      :'保持期摄入与消耗持平，重点放在蛋白质充足与规律运动，维持体成分稳定。'));
+
+  /* ── 官方食谱三餐卡：餐次供能比例 + 地区/季节菜单 + 一键记入 ── */
+  const MEAL_SLOT=['早','午','晚'];
+  const mealCard=(label,key,i,acc)=>{
+    const mIdx=LS.get('menu_'+key,0)||0;
+    const cur=seasonMenu[mIdx]||seasonMenu[0];
+    const dish=cur[MEAL_SLOT[i]]||'';
+    const quota=quotaOf(i);
+    const has=log.items.some(x=>x.meal===key&&x.n===dish);
+    return `<div class="card" style="--acc:${acc.acc};--accs:${acc.accs}">
+      <h2>${label} <span class="badge" style="background:${acc.tg}">建议 ${quota} kcal</span></h2>
+      <div class="mini" style="margin:-2px 0 7px">${esc(reg.e+' '+reg.n+'·'+season)} · 占全天 ${RATIO[i]*10}%</div>
+      <div class="item" style="background:${acc.bgc}">
+        <div class="t" style="font-size:13px;line-height:1.6">${esc(dish)}</div>
+        <div class="m"><span class="tag" style="background:${acc.tg}">${esc(`${stapleG}g 主食 · 蛋白约 ${Math.round(protein/3)}g`)}</span></div>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:9px">
+        <button class="btn sm" data-menu="${key}">🔄 换一份</button>
+        <button class="btn sm ${has?'pri':''}" style="--acc:${acc.acc};--accs:${acc.accs}" data-add="${key}|${esc(dish)}|${quota}">${has?'✅ 已记录':'＋ 记入今日'}</button>
+      </div>
+    </div>`};
+
+  /* 供自动化测试读取计算结果（不参与渲染） */
+  window.__dietDebug={remaining,plan,todo:todo.map(x=>x.m),snackOK,target,deficit,protein,carbK,fatK,
+    quota:[quotaOf(0),quotaOf(1),quotaOf(2)],regKey,season,menuIdx,stapleG,water,dinnerOK,orderOK,lossInRange,
+    bmr,tdee,monthLoss,clampedHigher,waterOK,lossTag,floorNote,filled};
+  return `
+  <div class="head"><h1>🥗 每日减脂饮食</h1><p>身高体重记录 · 热量缺口计算 · 个性化推荐</p></div>
+
+  <!-- 体质档案 -->
+  <div class="card tint" style="--acc:${PASTEL[3].acc};--bgc:${PASTEL[3].bgc}">
+    <h2>🧬 我的体质档案 <span class="badge">${bmi?bt.n:''}</span></h2>
+    <div class="grid2" style="gap:6px;margin-bottom:6px">
+      <select class="in" id="bsex">
+        <option value="f" ${P.sex==='f'?'selected':''}>女性</option>
+        <option value="m" ${P.sex==='m'?'selected':''}>男性</option>
+      </select>
+      <input class="in" id="bage" type="number" inputmode="numeric" placeholder="年龄" value="${P.age||''}">
+      <input class="in" id="bh" type="number" inputmode="decimal" placeholder="身高 cm" value="${P.height||''}">
+      <input class="in" id="bw" type="number" inputmode="decimal" placeholder="体重 kg" value="${P.weight||''}">
+    </div>
+    <select class="in" id="bact" style="margin-bottom:6px">
+      ${Object.keys(ACT).map(k=>`<option value="${k}" ${P.act===k?'selected':''}>${ACT[k].n} · ${ACT[k].d}</option>`).join('')}
+    </select>
+    <div style="display:flex;gap:6px;margin-bottom:8px">
+      ${[['lose','减脂'],['keep','保持'],['gain','增肌']].map(([k,n])=>
+        `<button class="btn sm" data-goal="${k}" style="flex:1;${P.goal===k?'background:'+PASTEL[3].acc+';color:#fff;border-color:transparent':''}">${n}</button>`).join('')}
+    </div>
+    <button class="btn pri wide" style="--acc:${PASTEL[3].acc};--accs:${PASTEL[3].accs}" id="bsave">保存并重新计算</button>
+    ${filled?`<div class="hr"></div>
+    <div class="grid2" style="gap:6px">
+      <div class="stat" style="background:#fff"><b style="color:${PASTEL[3].acc}">${bmi}</b><span>BMI 体质指数</span></div>
+      <div class="stat" style="background:#fff"><b style="color:${bt.c}">${bt.n}</b><span>体重区间</span></div>
+      <div class="stat" style="background:#fff"><b style="color:${PASTEL[2].acc}">${bmr}</b><span>基础代谢 kcal</span></div>
+      <div class="stat" style="background:#fff"><b style="color:${PASTEL[0].acc}">${tdee}</b><span>每日消耗 kcal</span></div>
+    </div>
+    <div class="mini" style="margin-top:7px">理想体重区间：${ilo} – ${ihi} kg${P.weight>ihi?`，距上限还需减 ${Math.round((P.weight-ihi)*10)/10} kg`:''}${P.weight<ilo?`，建议至少增至 ${ilo} kg`:''}</div>`:''}
+  </div>
+
+  <!-- 热量缺口 -->
+  <div class="card tint" style="--acc:${PASTEL[0].acc};--bgc:${PASTEL[0].bgc}">
+    <h2>🔥 今日热量缺口 <span class="badge">${filled?(deficit>0?'缺口 '+deficit:'盈余 '+(-deficit))+' kcal':'待填写档案'}</span></h2>
+    <div class="kv"><b style="color:${PASTEL[0].acc}" id="kcalnum">${total}</b><span>/ 目标 ${filled?target:'—'} kcal</span></div>
+    <div class="bar"><i style="--acc:${PASTEL[0].acc};width:${pct}%" id="kcalbar"></i></div>
+    <div class="grid2" style="gap:6px;margin-top:8px">
+      <div class="stat" style="background:#fff"><b style="color:${deficit>0?PASTEL[0].acc:'#9A9A9A'}">${filled?(deficit>0?deficit:0):'—'}</b><span>每日热量缺口</span></div>
+      <div class="stat" style="background:#fff"><b style="color:${PASTEL[6].acc}">${filled?weekLoss:'—'}</b><span>预计周减重 kg</span></div>
+    </div>
+    ${filled&&lossTag?`<div class="mini" style="margin-top:7px">📏 减重速度：<b style="color:${lossInRange?PASTEL[0].acc:PASTEL[1].acc}">${lossTag}</b>　｜　约 ${monthLoss} kg / 月（指南建议 2–4 kg）</div>`:''}
+    ${filled&&clampedHigher?`<div class="mini" style="margin-top:4px;color:#9A9A9A">你的基础代谢约 ${bmr} kcal，已按此保底，不再往下压。想吃得更少不如多动一点。</div>`:''}
+    ${filled&&floorNote==='high'?`<div class="mini" style="margin-top:4px;color:#9A9A9A">你消耗较高（${tdee} kcal），指南的 ${OFFICIAL.kcal.f[0]}–${OFFICIAL.kcal.m[1]} kcal 属"低能量膳食"档，不必硬压到那里；按缺口 ${deficit} kcal 执行即可。</div>`:''}
+    <div class="hr"></div>
+    <div class="mini">${!filled?'填写上方体质档案后，这里会自动算出你的每日热量缺口与预期减重速度。'
+      :(total===0?'今日尚未记录饮食。建议在三餐中选择搭配，凑够 '+target+' kcal 左右即可。'
+      :(over>150?'今日已超目标 '+over+' kcal，建议晚餐改为清淡蛋白+蔬菜，或增加 30 分钟有氧 🏃'
+       :(dayLeft>0?'今日还可摄入约 '+dayLeft+' kcal，注意不要用高糖零食填补 🌿'
+        :'今日摄入基本达标，保持这个节奏 ✅')))}</div>
+    <div class="hr"></div>
+    <button class="btn sm" id="kcalreset">♻️ 清空今日记录</button>
+  </div>
+
+  <!-- 自由饮食记录 -->
+  <div class="card tint" style="--acc:${PASTEL[4].acc};--bgc:${PASTEL[4].bgc}">
+    <h2>📝 记录我今天吃的 <span class="badge">${log.items.length} 条</span></h2>
+    <div class="mini" style="margin-bottom:7px">不必照着推荐食谱，吃了什么就记什么。热量可查包装营养成分表，或按下方常用食物估算。</div>
+    <div style="display:flex;gap:6px;margin-bottom:6px">
+      <select class="in" id="fmeal" style="flex:0 0 88px">
+        ${DIET_MEALS.map(([m,e])=>`<option value="${m}">${e} ${m}</option>`).join('')}
+      </select>
+      <input class="in" id="fname" placeholder="食物名称，如：牛肉面" style="flex:1 1 auto;min-width:0">
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:6px">
+      <input class="in" id="fkcal" type="number" inputmode="numeric" placeholder="热量 kcal" style="flex:1 1 auto;min-width:0">
+      <button class="btn pri" style="--acc:${PASTEL[4].acc};--accs:${PASTEL[4].accs};flex:0 0 auto" id="fadd">＋ 添加</button>
+    </div>
+    <div class="mini" style="margin-bottom:5px">常用食物快捷加（点击即记）</div>
+    <div id="quick">
+      ${D.常用食物.map(f=>`<span class="pill" data-quick="${esc(f[0])}|${f[1]}" style="background:${PASTEL[4].tg}">${esc(f[0])} ${f[1]}</span>`).join('')}
+    </div>
+    ${log.items.length?`<div class="hr"></div>
+    ${DIET_MEALS.map(([m,e])=>{
+      const arr=log.items.map((it,idx)=>({it,idx})).filter(x=>x.it.meal===m);
+      if(!arr.length)return '';
+      return `<div style="margin-bottom:7px">
+        <div class="mini" style="margin-bottom:4px">${e} ${m} · ${mealSum(log,m)} kcal</div>
+        ${arr.map(({it,idx})=>`<div style="display:flex;align-items:center;gap:6px;font-size:12px;padding:4px 0;border-bottom:1px solid rgba(0,0,0,.03)">
+          <span style="flex:1 1 auto;min-width:0;word-break:break-word">${esc(it.n)}</span>
+          <b style="flex:0 0 auto;color:${PASTEL[4].acc}">${it.k}</b>
+          <span class="del" data-fdel="${idx}" style="flex:0 0 auto">✕</span>
+        </div>`).join('')}
+      </div>`}).join('')}`:''}
+  </div>
+
+  <!-- 后续餐食推荐 -->
+  <div class="card tint" style="--acc:${PASTEL[3].acc};--bgc:${PASTEL[3].bgc}">
+    <h2>🍽 后面几餐吃什么 <span class="badge">剩余 ${remaining>0?remaining:0} kcal</span></h2>
+    ${!filled
+      ? `<div class="mini">填写上方体质档案后，会根据你的剩余额度推荐后续餐食。</div>`
+      : (remaining<=60
+        ? `<div class="mini">今日额度已基本用完 🎉 若实在饿，可选「黄瓜 / 圣女果」「黑咖啡」这类几乎零负担的食物垫一下，避免超标。</div>`
+        : (plan.length===0
+          ? `<div class="mini">今天的正餐时段已过。若还有额度，可作为晚间加餐：<br>
+             ${D.备选餐.filter(f=>f.tag==='加餐').slice(0,3).map(f=>`<span class="tag" style="background:${PASTEL[3].tg}">${esc(f.n)} ${f.k}kcal</span>`).join('')}</div>`
+          : `<div class="mini" style="margin-bottom:8px">按还剩 ${remaining} kcal 额度，为你分配如下（点击可直接记入）：</div>
+            ${plan.map(p=>`
+              <div style="background:#fff;border-radius:12px;padding:9px 10px;margin-bottom:7px">
+                <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:6px">
+                  <b style="font-size:12.5px">${p.e} ${p.meal}</b>
+                  <span class="badge" style="margin-left:auto;background:${PASTEL[3].tg};color:#6B6B6B">建议 ${p.quota} kcal</span>
+                </div>
+                ${p.cand.map(f=>`
+                  <div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid rgba(0,0,0,.03)">
+                    <span style="flex:1 1 auto;min-width:0;font-size:12px;word-break:break-word">${esc(f.n)}
+                      <small style="color:#9A9A9A;display:block;font-size:10px">${esc(f.p)}</small></span>
+                    <b style="flex:0 0 auto;font-size:11.5px;color:${PASTEL[3].acc}">${f.k}</b>
+                    <button class="btn sm" style="flex:0 0 auto;padding:4px 8px;font-size:10.5px;--acc:${PASTEL[3].acc};--accs:${PASTEL[3].accs}" data-radd="${esc(p.meal)}|${esc(f.n)}|${f.k}">＋</button>
+                  </div>`).join('')}
+              </div>`).join('')}`))
+    }
+    ${filled&&plan.length&&snackOK?`<div class="mini" style="margin-top:2px">💡 距晚餐还有一段时间，若饿了可先加餐：${D.备选餐.filter(f=>f.tag==='加餐'&&f.k<=remaining).slice(0,2).map(f=>`<span class="tag" style="background:${PASTEL[3].tg}">${esc(f.n)} ${f.k}kcal</span>`).join('')}</div>`:''}
+  </div>
+
+  <!-- 个性化推荐 -->
+  <div class="card" style="--acc:${PASTEL[2].acc}">
+    <h2>🎯 个性化建议</h2>
+    <div class="mini" style="margin-bottom:8px;line-height:1.75">${advice}</div>
+    ${filled?`
+    <div class="hr"></div>
+    <div class="mini" style="margin-bottom:6px"><b>🍽 每日营养分配</b></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+      <span class="tag" style="background:${PASTEL[2].tg}">蛋白质 ${protein} g</span>
+      <span class="tag" style="background:${PASTEL[0].tg}">碳水 ${carbK} g</span>
+      <span class="tag" style="background:${PASTEL[4].tg}">脂肪 ${fatK} g</span>
+      <span class="tag" style="background:${PASTEL[3].tg}">饮水 1.5–2 L</span>
+    </div>
+    <div class="hr"></div>
+    <div class="mini" style="margin-bottom:6px"><b>🏃 推荐运动方案</b>（${recEx.many}）</div>
+    <div class="mini" style="line-height:1.75">${recEx.plan}<br>
+      <span style="color:#9A9A9A">可选用：${recEx.ex}（见「运动塑形」模块）</span></div>`:''}
+  </div>
+
+  ${mealCard('🌅 早餐','早餐',0,PASTEL[2])}
+  ${mealCard('🌞 午餐','午餐',1,PASTEL[0])}
+  ${mealCard('🌙 晚餐','晚餐',2,PASTEL[4])}
+
+  <!-- 三餐供能比 3:4:3 -->
+  <div class="card tint" style="--acc:${PASTEL[1].acc};--bgc:${PASTEL[1].bgc}">
+    <h2>🍱 三餐供能比 3:4:3 <span class="badge">${filled?'目标 '+target+' kcal':'待填写档案'}</span></h2>
+    <div class="mini" style="margin-bottom:7px">早 30% · 午 40% · 晚 30%。下表左侧是"今日已吃"，右侧是"这一餐该吃到多少"。</div>
+    ${filled?'':'<div class="mini" style="margin-bottom:7px;color:#9A9A9A">填写体质档案后，这里会按你的目标热量换算每餐建议份量。</div>'}
+    ${['早餐','午餐','晚餐'].map((m,i)=>{
+      const sum=mealSum(log,m);
+      const q=Math.round(target*RATIO[i]/10/10)*10;
+      const raw=Math.round(sum/Math.max(1,q)*100);   /* 真实百分比，不截断，超量才能判出"偏多" */
+      const w2=Math.min(100,raw);
+      const state=sum===0?'未记录':(raw<60?'偏少':(raw>125?'偏多':'达标'));
+      const col=sum===0?'#BDBDBD':(raw<60?PASTEL[2].acc:(raw>125?PASTEL[1].acc:PASTEL[0].acc));
+      return `<div style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:12px;padding:8px 10px;margin-bottom:6px">
+        <span style="flex:0 0 40px;font-size:11.5px;color:#6B6B6B">${m}</span>
+        <div style="flex:1 1 auto;min-width:0">
+          <div style="height:5px;border-radius:3px;background:#EDEDED;overflow:hidden">
+            <i style="display:block;height:100%;width:${w2}%;background:${col};border-radius:3px"></i>
+          </div>
+        </div>
+        <span style="flex:0 0 auto;font-size:11.5px;font-weight:700;color:${col}">${sum}</span>
+        <span style="flex:0 0 auto;font-size:10.5px;color:#9A9A9A">/ ${filled?q:'—'}</span>
+        <span style="flex:0 0 34px;text-align:right;font-size:10px;color:${col}">${state}</span>
+      </div>`}).join('')}
+  </div>
+
+  <!-- 央妈减肥法 · 习惯打卡 -->
+  <div class="card tint" style="--acc:${PASTEL[9].acc};--bgc:${PASTEL[9].bgc}">
+    <h2>✅ 今日习惯打卡 <span class="badge">${(waterOK?1:0)+(dinnerOK?1:0)+(orderOK?1:0)} / 3</span></h2>
+    <div class="mini" style="margin-bottom:8px">这三条是《成人肥胖食养指南》里最容易落地的部分，做到比算准更重要。</div>
+
+    <!-- 饮水 -->
+    <div style="background:#fff;border-radius:12px;padding:9px 10px;margin-bottom:7px">
+      <div style="display:flex;align-items:baseline;gap:6px">
+        <b style="font-size:12.5px">💧 饮水</b>
+        <span class="badge" style="margin-left:auto;background:${waterOK?PASTEL[0].tg:'#F1F1F1'};color:${waterOK?PASTEL[0].acc:'#8A8A8A'}">${water} / 1500–2000 ml</span>
+      </div>
+      <div style="height:5px;border-radius:3px;background:#EDEDED;margin:7px 0;overflow:hidden">
+        <i style="display:block;height:100%;width:${Math.min(100,Math.round(water/2000*100))}%;background:${waterOK?PASTEL[0].acc:'#CFCFCF'};border-radius:3px"></i>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${[250,500].map(v=>`<button class="btn sm" style="flex:1 1 0;padding:5px 0;font-size:11px" data-water="${v}">＋${v}ml</button>`).join('')}
+        <button class="btn sm" style="flex:1 1 0;padding:5px 0;font-size:11px" data-water="-250">－250</button>
+        <button class="btn sm" style="flex:0 0 auto;padding:5px 9px;font-size:11px" data-water="0">清零</button>
+      </div>
+    </div>
+
+    <!-- 晚餐时间 -->
+    <div style="background:#fff;border-radius:12px;padding:9px 10px;margin-bottom:7px">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+        <b style="font-size:12.5px">🕕 晚餐时间</b>
+        <span class="badge" style="margin-left:auto;background:${dinnerOK?PASTEL[0].tg:'#F1F1F1'};color:${dinnerOK?PASTEL[0].acc:'#8A8A8A'}">${dinnerOK?'在 17–19 点 ✓':'建议 17–19 点'}</span>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <input class="in" id="dinnertime" type="time" value="${esc(dinnerTime||'')}" style="flex:1 1 auto;min-width:0">
+        <button class="btn sm" id="dinnerset" style="flex:0 0 auto">记录</button>
+      </div>
+      <div class="mini" style="margin-top:5px">晚餐后尽量不再进食（可饮水），睡前 3 小时吃完。</div>
+    </div>
+
+    <!-- 进餐顺序 -->
+    <div style="background:#fff;border-radius:12px;padding:9px 10px">
+      <div style="display:flex;align-items:center;gap:6px">
+        <b style="font-size:12.5px">🥢 进餐顺序</b>
+        <button class="btn sm ${orderOK?'pri':''}" style="margin-left:auto;flex:0 0 auto;padding:5px 10px;font-size:11px;--acc:${PASTEL[0].acc};--accs:${PASTEL[0].accs}" id="orderbtn">${orderOK?'✅ 已做到':'标记做到'}</button>
+      </div>
+      <div class="mini" style="margin-top:5px">先吃蔬菜 → 再吃肉蛋 → 最后主食，同样饭菜能少吃不少。</div>
+    </div>
+  </div>
+
+  <!-- 地区口味 -->
+  <div class="card" style="--acc:${PASTEL[5].acc}">
+    <h2>🗺 我的地区口味 <span class="badge">${esc(reg.n)}</span></h2>
+    <div class="mini" style="margin-bottom:7px">指南为七大地区分别设计了四季食谱。选你所在地区，推荐会更贴近日常饮食。</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      ${REGION_KEYS.map(k=>`<button class="btn sm" data-region="${k}" style="${P.region===k?'background:'+PASTEL[5].acc+';color:#fff;border-color:transparent':''}">${REGION[k].e} ${REGION[k].n}</button>`).join('')}
+    </div>
+    <div class="mini" style="margin-top:8px;line-height:1.7">📍 ${esc(reg.t)}。<br>当前按 <b>${esc(reg.e+' '+reg.n+'·'+season)}</b> 出菜单，参考热量 ${menu.k} kcal（你的目标是 ${target} kcal）。</div>
+  </div>
+
+  <div class="card">
+    <h2>📖 央妈减肥法 · 核心原则</h2>
+    <div class="mini" style="line-height:1.9">
+      <b>① 控总量</b>：在消耗基础上每天减 500–1000 kcal，或减少 30%–50%；限能量参考区间 男 1200–1500、女 1000–1200 kcal<br>
+      <b>② 调结构</b>：碳水 50%–60%、脂肪 20%–30%、蛋白质 15%–20%；三餐供能比 3:4:3<br>
+      <b>③ 换食材</b>：主食全谷物为主、粗细搭配；优先瘦肉、去皮鸡胸、鱼虾；奶类选低脂或脱脂<br>
+      <b>④ 改习惯</b>：晚餐 17–19 点、饭后不再进食；蔬菜→肉类→主食；细嚼慢咽<br>
+      <b>⑤ 控油盐</b>：全天烹调油 15–25g，盐 <5g；少吃高能量密度食物，严格限酒<br>
+      <b>⑥ 动与睡</b>：每周有氧 150–300 分钟 + 抗阻 2–3 次；睡眠约 7 小时，23 点前入睡<br>
+      <b>⑦ 慢一点</b>：每月减 2–4kg（每周 0.5–1kg），半年减当前体重 5%–10% 最不反弹
+    </div>
+    <div class="mini" style="margin-top:8px;color:#9A9A9A">依据：国家卫健委《成人肥胖食养指南（2024 年版）》。本模块为生活方式参考，孕期、哺乳期、慢病及用药人群请遵医嘱。</div>
+  </div>`;
+};
+
+/* ④ 运动塑形 */
+R.运动=()=>{
+  const d=new Date();
+  const y=d.getFullYear(),m=d.getMonth();
+  const first=new Date(y,m,1).getDay();
+  const days=new Date(y,m+1,0).getDate();
+  const rec=LS.get('ex',{});
+  const tk=todayKey();
+  let cells='';
+  ['日','一','二','三','四','五','六'].forEach(w=>cells+=`<div class="wd">${w}</div>`);
+  for(let i=0;i<first;i++)cells+=`<div class="d blank"></div>`;
+  for(let i=1;i<=days;i++){
+    const k=y+'-'+(m+1)+'-'+i;
+    const on=!!rec[k];
+    const istoday=k===tk;
+    cells+=`<div class="d ${on?'on':''} ${istoday?'today':''}" data-day="${k}">${i}</div>`;
+  }
+  const monthCount=Object.keys(rec).filter(k=>k.startsWith(y+'-'+(m+1)+'-')).length;
+  return `
+  <div class="head"><h1>🏃 运动塑形锻炼</h1><p>打卡日历 + 居家无器械训练计划</p></div>
+  <div class="card tint" style="--acc:${PASTEL[0].acc};--bgc:${PASTEL[0].bgc}">
+    <h2>${m+1} 月运动打卡 <span class="badge">本月 ${monthCount} 天</span></h2>
+    <div class="cal" id="cal">${cells}</div>
+    <div class="hr"></div>
+    <div style="display:flex;gap:6px">
+      <button class="btn sm ${rec[tk]?'pri':''}" style="--acc:${PASTEL[0].acc};--accs:${PASTEL[0].accs}" id="extoday">${rec[tk]?'✅ 今日已打卡':'⭕ 今日打卡'}</button>
+      <button class="btn sm" id="exclear">清空打卡</button>
+    </div>
+    <div class="mini" style="margin-top:7px">点击日历任意日期即可补卡或取消，数据保存在本机浏览器。</div>
+  </div>
+  <div class="card"><h2>居家无器械训练计划</h2>
+    <div class="mini">以下计划均无需器械，可在 2㎡ 空间内完成，建议每周训练 4–5 次，穿插 1–2 天恢复日。</div>
+  </div>
+  ${D.运动.map((x,i)=>`
+  <details class="fold" style="--acc:${PASTEL[i%PASTEL.length].acc}">
+    <summary><span>${esc(x.n)}</span><span class="arw">▶</span></summary>
+    <div class="body">
+      <div class="mini" style="margin-bottom:6px">${esc(x.d)}</div>
+      <span class="tag" style="background:${PASTEL[i%PASTEL.length].tg}">${esc(x.lv)}</span>
+    </div>
+  </details>`).join('')}`;
+};
+
+/* ⑤ 热点新闻 —— 实时抓取
+   每个分类配多级候选 RSS 源（经 rss2json 桥转 JSON，支持跨域），
+   全部失败时回落到内置静态内容。按天+分类缓存，30 分钟过期。 */
+const NEWS_FEEDS={
+  科技:['https://www.ithome.com/rss/','https://sspai.com/feed'],
+  财经:['https://dedicate.wallstreetcn.com/rss.xml','https://feeds.a.dj.com/rss/RSSMarketsMain.xml','https://www.ithome.com/rss/'],
+  生活:['https://sspai.com/feed','https://www.ithome.com/rss/'],
+  娱乐:['https://www.ithome.com/rss/','https://sspai.com/feed'],
+  时政:['https://feedx.net/rss/thepaper.xml','https://feeds.a.dj.com/rss/RSSWorldNews.xml']
+};
+const NEWS_TTL=30*60*1000;               /* 缓存有效期：30 分钟 */
+const NEWS_LAST='newsLastTry';           /* 防抖时间戳：{cat: ms} */
+
+const newsCacheGet=(cat)=>{
+  const c=LS.get('newsCache',null);
+  if(!c||c.d!==todayKey()||!c[cat])return null;
+  const e=c[cat];
+  return (e&&e.items&&e.items.length)?e:null;
+};
+const newsCacheSet=(cat,data)=>{
+  const tk=todayKey();
+  const c=LS.get('newsCache',null)||{};
+  if(c.d!==tk){for(const k in c)delete c[k];c.d=tk}
+  c[cat]=Object.assign({at:Date.now()},data);
+  try{LS.set('newsCache',c)}catch(e){}
+};
+const newsFresh=cat=>{const e=newsCacheGet(cat);return !!e&&(Date.now()-e.at)<NEWS_TTL};
+
+/* 清洗 RSS 条目：解码实体、去 HTML 标签、压缩空白、截断摘要 */
+const newsClean=(s,n)=>{
+  const txt=String(s||'')
+    .replace(/<[^>]*>/g,' ')
+    .replace(/&nbsp;/gi,' ').replace(/&lt;/gi,'<').replace(/&gt;/gi,'>')
+    .replace(/&quot;/gi,'"').replace(/&#39;/gi,"'").replace(/&apos;/gi,"'")
+    .replace(/&mdash;/gi,'—').replace(/&hellip;/gi,'…')
+    .replace(/&amp;/gi,'&')                       /* &amp; 必须最后解码 */
+    .replace(/\s+/g,' ').trim();
+  return txt.length>n?txt.slice(0,n)+'…':txt;
+};
+
+/* 从单个 RSS 源抓取（rss2json 桥，免费无需 Key，支持 CORS） */
+const newsFetchFeed=async(feed)=>{
+  const q='https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(feed);
+  const ctl=(typeof AbortController!=='undefined')?new AbortController():null;
+  const timer=ctl?setTimeout(()=>ctl.abort(),9000):null;
+  try{
+    const r=await fetch(q,ctl?{signal:ctl.signal}:{});
+    if(!r.ok)throw new Error('http '+r.status);
+    const j=await r.json();
+    if(!j||j.status!=='ok'||!j.items||!j.items.length)throw new Error('empty');
+    return j.items.map(it=>({
+      t:newsClean(it.title,64),
+      d:newsClean(it.description||it.content,68)||newsClean(it.title,68),
+      l:it.link||'',
+      p:it.pubDate?newsClean(it.pubDate,16):''
+    }));
+  }finally{if(timer)clearTimeout(timer)}
+};
+
+/* 按分类抓取：依序尝试候选源，拿到即止 */
+const newsFetch=async(cat)=>{
+  const feeds=NEWS_FEEDS[cat]||[];
+  for(const f of feeds){
+    try{
+      const items=await newsFetchFeed(f);
+      if(items&&items.length>=3){newsCacheSet(cat,{items,src:f});return items}
+    }catch(e){/* 换下一个源 */}
+  }
+  throw new Error('all-feeds-failed');
+};
+R.新闻=()=>{
+  const cats=[['科技',PASTEL[3]],['财经',PASTEL[2]],['生活',PASTEL[0]],['娱乐',PASTEL[6]],['时政',PASTEL[9]]];
+  const act=LS.get('newscat','科技');
+  const c=cats.find(x=>x[0]===act)||cats[0];
+  const live=newsCacheGet(act);            /* 当日实时缓存 */
+  const items=live?live.items:D.新闻[act]||[];
+  const isLive=!!live;
+  const stale=live&&!newsFresh(act);
+  const badge=isLive?(stale?'缓存':'实时'):'内置';
+  const srcName=live?(live.src||'').replace(/^https?:\/\/(www\.)?/,'').split('/')[0]:'';
+  const d=new Date();
+  const dstr=(d.getMonth()+1)+'月'+d.getDate()+'日';
+  return `
+  <div class="head"><h1>📰 热点新闻</h1><p>${esc(dstr)} · ${isLive?'当日实时':'实时获取中，稍后自动更新'}</p></div>
+  <div style="margin-bottom:9px;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none" id="newstabs">
+    ${cats.map(x=>`<span class="pill" data-cat="${x[0]}" style="${x[0]===act?`background:${x[1].acc};color:#fff`:''}">${x[0]}</span>`).join('')}
+  </div>
+  <div id="newslist">${items.map((n,i)=>`
+    <div class="item" style="background:${c[1].bgc}" ${n.l?`data-link="${esc(n.l)}"`:''}>
+      <div class="t">${esc(n.t)}</div>
+      <div class="d">${esc(n.d)}</div>
+      <div class="m"><span class="tag" style="background:${c[1].tg}">${c[0]}</span><span>${isLive?(n.p?esc(n.p)+' · ':'')+'来源 '+esc(srcName||'RSS'):((i+1)+' / '+items.length)}</span></div>
+    </div>`).join('')}</div>
+  <div class="card" style="--acc:${c[1].acc}">
+    <h2>数据说明 <span class="badge">${badge}${isLive&&stale?' · 建议刷新':''}</span></h2>
+    <div class="mini">${isLive
+      ?'当前为今日抓取的实时内容'+(srcName?'（源：'+esc(srcName)+'）':'')+'，点条目可打开原文。'
+      :'正在获取今日实时新闻…获取失败时会保留内置摘要。'}${stale?' 数据已超过 30 分钟，可点下方刷新。':''}</div>
+    <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+      <button class="btn sm pri" style="--acc:${c[1].acc};--accs:${c[1].accs}" id="newsrefresh">🔄 刷新新闻</button>
+    </div>
+  </div>`;
+};
+
+/* ⑥ 成长书籍 */
+R.书籍=()=>{
+  const months=Object.keys(D.书籍);
+  const now=new Date().getMonth()+1;
+  const def=months[Math.min(now-1,months.length-1)];
+  let cur=LS.get('bookm',def);
+  if(!D.书籍[cur])cur=def;          // 容错：存储值非法时回落到当月
+  const idx=months.indexOf(cur);
+  return `
+  <div class="head"><h1>📚 成长书籍推荐</h1><p>按月书单 · 标签与简介</p></div>
+  <div class="card tint" style="--acc:${PASTEL[4].acc};--bgc:${PASTEL[4].bgc}">
+    <h2>${esc(cur)} 书单 <span class="badge">${idx+1} / 12 月</span></h2>
+    <div style="margin-top:4px">${D.书籍[cur].map(b=>`<span class="tag" style="background:${PASTEL[4].tg}">${esc(b.n)}</span>`).join('')}</div>
+    <div class="hr"></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      ${months.map(m=>`<span class="pill" data-bm="${m}" style="${m===cur?`background:${PASTEL[4].acc};color:#fff`:''}">${m.replace('月','')}</span>`).join('')}
+    </div>
+  </div>
+  ${D.书籍[cur].map(b=>`
+  <div class="card">
+    <h2>${esc(b.n)}</h2>
+    <div class="m" style="margin-bottom:6px;font-size:10.5px;color:#9A9A9A">作者：${esc(b.a)}</div>
+    <div>${b.t.map(t=>`<span class="tag" style="background:${PASTEL[4].tg}">${esc(t)}</span>`).join('')}</div>
+    <div class="d" style="font-size:12px;color:#6B6B6B;line-height:1.7">${esc(b.d)}</div>
+  </div>`).join('')}`;
+};
+
+/* ⑦ 理财存钱 */
+R.理财=()=>{
+  const goal=LS.get('goal',{name:'存钱目标',target:50000,cur:0});
+  const pct=Math.min(100,Math.round(goal.cur/goal.target*100));
+  const names=LS.get('goalnames',[]);
+  const plan=LS.get('plan',null)||(()=>{const p={d:todayKey(),list:shuffle(D.理财).slice(0,3).map(x=>x.n)};LS.set('plan',p);return p})();
+  if(plan.d!==todayKey()){plan.d=todayKey();plan.list=shuffle(D.理财).slice(0,3).map(x=>x.n);LS.set('plan',plan)}
+  return `
+  <div class="head"><h1>💰 理财存钱</h1><p>低风险入门技巧 + 存钱进度可视化</p></div>
+  <div class="card tint" style="--acc:${PASTEL[7].acc};--bgc:${PASTEL[7].bgc}">
+    <h2>存钱进度 <span class="badge">${pct}%</span></h2>
+    <div class="kv"><b style="color:${PASTEL[7].acc}">¥${goal.cur.toLocaleString()}</b><span>/ ¥${goal.target.toLocaleString()}</span></div>
+    <div class="bar"><i style="--acc:${PASTEL[7].acc};width:${pct}%"></i></div>
+    <div class="mini">${pct>=100?'🎉 目标已达成，可以设置下一个更高的目标了！':`还差 ¥${(goal.target-goal.cur).toLocaleString()}，按每月存 ¥${Math.max(1,Math.ceil((goal.target-goal.cur)/12)).toLocaleString()} 计算，约 12 个月可达成。`}</div>
+    <div class="hr"></div>
+    <div class="grid2" style="gap:6px">
+      <input class="in" id="goaladd" type="number" inputmode="numeric" placeholder="存入金额" value="">
+      <button class="btn pri" style="--acc:${PASTEL[7].acc};--accs:${PASTEL[7].accs}" id="goaladdbtn">＋ 存入</button>
+    </div>
+    <div class="hr"></div>
+    <div class="mini" style="margin-bottom:6px">目标金额调整</div>
+    <input class="in" id="goaltarget" type="number" inputmode="numeric" placeholder="目标金额（元）" value="${goal.target}">
+    <div class="hr"></div>
+    <button class="btn sm" id="goalreset">重置存钱记录</button>
+  </div>
+  <div class="card" style="--acc:${PASTEL[7].acc}">
+    <h2>今日重点技巧</h2>
+    ${plan.list.map(n=>{const it=D.理财.find(x=>x.n===n)||{n,d:'',t:''};return `
+      <div class="item" style="background:${PASTEL[7].bgc}">
+        <div class="t">${esc(it.n)}</div>
+        <div class="d">${esc(it.d)}</div>
+        <div class="m"><span class="tag" style="background:${PASTEL[7].tg}">${esc(it.t)}</span></div>
+      </div>`}).join('')}
+  </div>
+  <div class="card"><h2>低风险理财入门全清单</h2>
+    ${D.理财.map(x=>`
+      <details class="fold" style="--acc:${PASTEL[7].acc}">
+        <summary><span>${esc(x.n)}</span><span class="arw">▶</span></summary>
+        <div class="body"><div class="mini">${esc(x.d)}</div></div>
+      </details>`).join('')}
+  </div>
+  <div class="card"><div class="mini">⚠️ 说明：以上为通用理财常识科普，不构成任何投资建议。任何承诺“保本高收益”的产品都需高度警惕。</div></div>`;
+};
+
+/* ⑧ 赚钱信息差 */
+R.信息差=()=>{
+  const kinds=['全部','副业','兼职','创业'];
+  const act=LS.get('infokind','全部');
+  const list=act==='全部'?D.信息差:D.信息差.filter(x=>x.c===act);
+  return `
+  <div class="head"><h1>🧭 赚钱信息差</h1><p>副业 · 兼职 · 创业类实用干货</p></div>
+  <div style="margin-bottom:9px">${kinds.map(k=>`<span class="pill" data-kind="${k}" style="${k===act?`background:${PASTEL[8].acc};color:#fff`:''}">${k}</span>`).join('')}</div>
+  <div class="grid2" style="margin-bottom:10px">
+    <div class="stat" style="background:${PASTEL[8].bgc}"><b style="color:${PASTEL[8].acc}">${list.length}</b><span>条信息差</span></div>
+    <div class="stat" style="background:${PASTEL[0].bgc}"><b style="color:${PASTEL[0].acc}">${D.信息差.filter(x=>x.c==='副业').length}</b><span>副业类项目</span></div>
+  </div>
+  ${list.map(x=>`
+  <div class="card">
+    <h2>${esc(x.t)} <span class="badge" style="background:${PASTEL[8].tg}">${esc(x.c)}</span></h2>
+    <div class="d" style="font-size:12px;color:#6B6B6B;line-height:1.7">${esc(x.d)}</div>
+    <div class="hr"></div>
+    <span class="tag" style="background:${PASTEL[8].tg}">💰 ${esc(x.m)}</span>
+  </div>`).join('')}
+  <div class="card"><div class="mini">⚠️ 提示：任何要求先交费、押金、培训费的“兼职”都需谨慎对待。信息差的价值在于执行，而非收藏。</div></div>`;
+};
+
+/* ⑨ 修心修行 */
+R.修心=()=>{
+  const tk=todayKey();
+  const rec=LS.get('mind',{});
+  const today=rec[tk]||{};
+  const n=Object.values(today).filter(Boolean).length;
+  const refl=LS.get('reflect',null);
+  let ri=refl;
+  if(!ri||ri.d!==tk){ri={d:tk,i:(Math.random()*D.自省.length)|0};LS.set('reflect',ri)}
+  const hist=LS.get('mindHist',[]);
+  return `
+  <div class="head"><h1>🧘 修心修行功课</h1><p>正念清单 + 每日自省引导</p></div>
+  <div class="card tint" style="--acc:${PASTEL[5].acc};--bgc:${PASTEL[5].bgc}">
+    <h2>今日正念打卡 <span class="badge">${n} / ${D.修心.length}</span></h2>
+    <div class="bar"><i style="--acc:${PASTEL[5].acc};width:${n/D.修心.length*100}%"></i></div>
+    <div class="mini">${n===0?'从最容易的一项开始，完成比完美重要。':n<D.修心.length?'很好，继续保持觉察 🌿':'🎉 今日功课圆满完成，随喜赞叹。'}</div>
+  </div>
+  ${D.修心.map((x,i)=>`
+    <div class="chk ${today[i]?'done':''}" data-mind="${i}" style="--acc:${PASTEL[5].acc}">
+      <div class="box">✓</div>
+      <div class="lb">${esc(x.n)}<small>${esc(x.d)}</small></div>
+    </div>`).join('')}
+  <div class="card" style="--acc:${PASTEL[5].acc}">
+    <h2>今日自省一问 <span class="badge">随机</span></h2>
+    <div class="quote" style="font-size:12.5px">${esc(D.自省[ri.i])}</div>
+    <div class="hr"></div>
+    <textarea class="ta" id="ref" placeholder="写下你的回答与觉察…">${esc((LS.get('refnote',{})[tk])||'')}</textarea>
+    <div class="hr"></div>
+    <button class="btn pri wide" style="--acc:${PASTEL[5].acc};--accs:${PASTEL[5].accs}" id="refsave">保存今日自省</button>
+  </div>
+  <div class="card"><h2>修行心法</h2><div class="mini">
+    心不随境转，境随心转。<br>
+    功课的意义不在数量，而在每一次真正回到当下的觉察。<br>
+    允许自己有状态起伏，不苛责、不放纵，中道而行。
+  </div></div>`;
+};
+
+/* ⑩ 博客精选 */
+R.博客=()=>{
+  return `
+  <div class="head"><h1>✍️ 博客精选</h1><p>个人成长类好文 · 摘要速览</p></div>
+  <div class="grid2" style="margin-bottom:10px">
+    <div class="stat" style="background:${PASTEL[9].bgc}"><b style="color:${PASTEL[9].acc}">${D.博客.length}</b><span>篇精选文章</span></div>
+    <div class="stat" style="background:${PASTEL[0].bgc}"><b style="color:${PASTEL[0].acc}">${D.博客.reduce((a,b)=>a+parseInt(b.r),0)}</b><span>分钟总阅读量</span></div>
+  </div>
+  ${D.博客.map((b,i)=>`
+  <div class="card">
+    <h2>${esc(b.t)}</h2>
+    <div class="m" style="font-size:10px;color:#9A9A9A;margin-bottom:6px;display:flex;gap:8px;flex-wrap:wrap">
+      <span class="tag" style="background:${PASTEL[9].tg};margin:0">${esc(b.a)}</span>
+      <span style="align-self:center">⏱ ${esc(b.r)}</span>
+    </div>
+    <div style="font-size:12px;color:#6B6B6B;line-height:1.75">${esc(b.d)}</div>
+  </div>`).join('')}
+  <div class="card"><div class="mini">以上为演示摘要，用于展示文章卡片的信息层级。可将 <code>D.博客</code> 替换为你关注的真实博客源。</div></div>`;
+};
+
+/* ⑪ 每日穿搭灵感 */
+R.穿搭=()=>{
+  const wx=LS.get('weather',null);                 /* 缓存的天气 */
+  const manual=LS.get('wxManual',null);            /* 手动填写的天气（覆盖） */
+  const w=manual||wx;
+  const prefs=outfitPrefs();
+  const plan=buildOutfit(w,prefs);
+  const tk=todayKey();
+  const fitLog=LS.get('fitLog',[]);
+  const todayFit=fitLog.find(f=>f.d===tk)||null;
+  const hist=fitLog.slice(0,12);
+  const styleTop=plan.styleTop, colorTop=plan.colorTop;
+
+  /* 天气区：有数据展示详情，无数据给出手动入口 */
+  let wxHTML='';
+  if(w){
+    const wm=wmoOf(w.code);
+    wxHTML=`
+    <div class="card tint" style="--acc:${PASTEL[5].acc};--bgc:${PASTEL[5].bgc}">
+      <h2>今日天气 <span class="badge">${esc(wxSrc(w))}</span></h2>
+      <div style="display:flex;align-items:center;gap:12px;margin:4px 0 8px">
+        <div style="font-size:38px;line-height:1">${wm.e}</div>
+        <div style="flex:1 1 auto;min-width:0">
+          <div class="kv"><b style="color:${PASTEL[5].acc}">${w.t!=null?w.t+'°':''}</b><span>${esc(wm.n)} · 体感 ${w.feels!=null?w.feels+'°':'-'}</span></div>
+          <div class="mini" style="margin-top:3px;font-weight:600;color:var(--ink)">📍 ${esc(w.city||'位置未知')}${w.district?' '+esc(w.district):''}${w.country?' · '+esc(w.country):''}${w.src==='ip'?' <span style="font-weight:400;color:var(--ink3)">（按 IP 估算，可能不准）</span>':''}</div>
+          <div class="mini" style="margin-top:2px">${w.hum!=null?'湿度 '+w.hum+'%':''}${w.hum!=null&&w.wind!=null?' · ':''}${w.wind!=null?'风 '+w.wind+'km/h':''}${(w.lat!=null)?((w.hum!=null||w.wind!=null)?' · ':'')+Math.abs(w.lat).toFixed(2)+'°'+((w.lat>=0)?'N':'S')+', '+Math.abs(w.lon).toFixed(2)+'°'+((w.lon>=0)?'E':'W'):''}</div>
+          ${wxStamp(w)}
+        </div>
+      </div>
+      ${(w.daily&&w.daily.length>1)?`<div class="hr"></div>
+      <div style="display:flex;gap:6px;overflow-x:auto;scrollbar-width:none">
+        ${w.daily.slice(1,4).map(x=>{const m=wmoOf(x.code);return `<div style="flex:0 0 auto;text-align:center;background:#fff;border-radius:11px;padding:7px 11px">
+          <div class="mini" style="margin:0">${esc(String(x.d).slice(5))}</div>
+          <div style="font-size:17px;margin:2px 0">${m.e}</div>
+          <div class="mini" style="margin:0">${Math.round(x.lo)}~${Math.round(x.hi)}°</div>
+        </div>`}).join('')}
+      </div>`:''}
+    </div>`;
+  }else{
+    wxHTML=`
+    <div class="card tint" style="--acc:${PASTEL[5].acc};--bgc:${PASTEL[5].bgc}">
+      <h2>今日天气 <span class="badge">未获取</span></h2>
+      <div class="mini" style="margin-bottom:9px">点下方按钮自动获取当地天气；若浏览器不允许定位或网络不通，也可直接手动填写。</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn sm pri" style="--acc:${PASTEL[5].acc};--accs:${PASTEL[5].accs}" id="wxget">📍 自动获取天气</button>
+      </div>
+      <div class="hr"></div>
+      <div class="mini" style="margin-bottom:6px">或手动填写（便于与自动结果核对）</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+        <input class="in" id="wxt" type="number" inputmode="numeric" placeholder="温度 ℃" style="flex:1 1 74px;min-width:0">
+        <select class="in" id="wxcode" style="flex:1 1 104px;min-width:0">
+          ${[0,1,2,3,45,51,61,63,65,71,73,75,80,95].map(c=>`<option value="${c}">${wmoOf(c).e} ${wmoOf(c).n}</option>`).join('')}
+        </select>
+        <input class="in" id="wxcity" type="text" placeholder="城市（可选）" value="${esc(w?w.city:'')}" style="flex:1 1 100%;min-width:0">
+        <button class="btn sm" id="wxset">保存</button>
+      </div>
+    </div>`;
+  }
+
+  /* 推荐区 */
+  const band=plan.cand.band;
+  const recRow=(label,list,emojiOf)=>list&&list.length?`
+    <div style="margin-top:8px">
+      <div class="mini" style="margin-bottom:4px">${label}</div>
+      <div>${list.map(n=>`<span class="tag" style="background:${PASTEL[5].tg}">${emojiOf?emojiOf(n):''}${esc(n)}</span>`).join('')}</div>
+    </div>`:'';
+  const catEmoji=n=>{const c=D.穿搭品类.find(x=>x.n===n);return c?c.e+' ':''};
+  const styleEmoji=k=>{const s=D.穿搭风格.find(x=>x.k===k);return s?s.e+' ':''};
+
+  return `
+  <div class="head"><h1>👗 每日穿搭灵感</h1><p>结合天气生成穿搭建议 · 记录后越推越准</p></div>
+
+  ${wxHTML}
+
+  <div class="card" style="--acc:${PASTEL[5].acc};margin-top:10px">
+    <h2>今日穿搭建议 <span class="badge">${w?BANDN[band]:'待定'}</span></h2>
+    ${w?`
+    <div class="mini">${esc(plan.cand.tip)}</div>
+    ${recRow('👕 上装',plan.up,catEmoji)}
+    ${plan.out.length?recRow('🧥 外搭',plan.out,catEmoji):'<div class="mini" style="margin-top:8px">🧥 外搭：不需要，今天温度足够</div>'}
+    ${recRow('👖 下装',plan.down,catEmoji)}
+    ${recRow('👟 鞋履',plan.shoe,catEmoji)}
+    ${plan.acc.length?recRow('🧢 配饰',plan.acc,catEmoji):''}
+    <div class="hr"></div>
+    <div class="mini" style="margin-bottom:5px">🎨 风格与色系</div>
+    <div>
+      ${(styleTop.length?styleTop:[{n:'待积累',v:0}]).map(s=>`<span class="tag" style="background:${PASTEL[5].acc};color:#fff">${styleEmoji(s.n)}${esc(s.n)}${s.v?' ×'+s.v:''}</span>`).join('')}
+      ${(colorTop.length?colorTop:[{n:'待积累',v:0}]).map(c=>`<span class="tag" style="background:${PASTEL[5].tg}">${esc(c.n)}${c.v?' ×'+c.v:''}</span>`).join('')}
+    </div>
+    <div class="mini" style="margin-top:6px">${prefs.total?('已根据你 ' + prefs.total + ' 次记录学习偏好' + (styleTop.length?'，最常穿的是「'+styleTop[0].n+'」':'')):'还没有历史记录，先记下今天的穿搭，明天开始推荐会越来越贴合你。'}</div>
+    `:`<div class="mini">先获取或填写今日天气，即可生成穿搭建议 👆</div>`}
+    <div class="hr"></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <button class="btn sm" id="wxget2">🔄 ${w?'刷新天气':'获取天气'}</button>
+      <button class="btn sm ${todayFit?'pri':''}" style="--acc:${PASTEL[5].acc};--accs:${PASTEL[5].accs}" id="fitopen">${todayFit?'✏️ 修改今日穿搭':'📝 记录今日穿搭'}</button>
+    </div>
+  </div>
+
+  <div id="fitpanel"></div>
+
+  <div class="card tint" style="--acc:${PASTEL[7].acc};--bgc:${PASTEL[7].bgc};margin-top:12px">
+    <h2>📊 我的风格画像 <span class="badge">${prefs.total} 次记录</span></h2>
+    ${prefs.total?`
+      <div class="mini" style="margin-bottom:6px">风格偏好</div>
+      <div>${Object.keys(prefs.f).map(n=>({n,v:prefs.f[n]})).sort((a,b)=>b.v-a.v).map(x=>`<span class="tag" style="background:${PASTEL[7].acc};color:#fff">${styleEmoji(x.n)}${esc(x.n)} ×${x.v}</span>`).join('')}</div>
+      <div class="mini" style="margin:8px 0 6px">色系偏好</div>
+      <div>${Object.keys(prefs.c).map(n=>({n,v:prefs.c[n]})).sort((a,b)=>b.v-a.v).map(x=>`<span class="tag" style="background:${PASTEL[7].tg}">${esc(x.n)} ×${x.v}</span>`).join('')}</div>
+      <div class="mini" style="margin:8px 0 6px">高频单品</div>
+      <div>${topK(prefs.p,8).map(x=>`<span class="tag" style="background:#F1F1F1">${catEmoji(x.n)}${esc(x.n)} ×${x.v}</span>`).join('')}</div>
+    `:'<div class="empty">还没有记录，记下几次穿搭后这里会生成你的风格画像 ✨</div>'}
+  </div>
+
+  <div class="card" style="--acc:${PASTEL[7].acc};margin-top:10px">
+    <h2>🗂 历史穿搭 <span class="badge">${fitLog.length} 条</span></h2>
+    <div class="mini" style="margin-bottom:8px">按时间倒序，仅保存在本机。图片已自动压缩，可直接删改。</div>
+    <div id="fitlist">${hist.length?hist.map((f,i)=>`
+      <div class="card" style="background:${PASTEL[7].bgc};margin-bottom:9px;box-shadow:none;border:1px solid ${PASTEL[7].tg}">
+        <div style="display:flex;gap:9px;align-items:flex-start">
+          ${f.img?`<img src="${f.img}" alt="穿搭照片" style="width:66px;height:88px;object-fit:cover;border-radius:10px;flex:0 0 auto;background:#fff">`:'<div style="width:66px;height:88px;border-radius:10px;flex:0 0 auto;background:#fff;display:flex;align-items:center;justify-content:center;font-size:22px">👗</div>'}
+          <div style="flex:1 1 auto;min-width:0">
+            <div class="mini" style="margin:0 0 3px">${esc(f.d)}${f.wx?(' · '+esc(f.wx)):''}</div>
+            <div style="font-size:11.5px;color:#5A5A5A;line-height:1.6;margin-bottom:4px">${esc(f.note||'（未填写描述）')}</div>
+            <div>
+              ${f.style?`<span class="tag" style="background:${PASTEL[7].acc};color:#fff;margin:0 4px 3px 0">${styleEmoji(f.style)}${esc(f.style)}</span>`:''}
+              ${f.color?`<span class="tag" style="background:${PASTEL[7].tg};margin:0 4px 3px 0">${esc(f.color)}</span>`:''}
+              ${(f.items||[]).slice(0,6).map(it=>`<span class="tag" style="background:#F1F1F1;margin:0 4px 3px 0">${catEmoji(it)}${esc(it)}</span>`).join('')}
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+          <button class="btn sm" style="padding:4px 10px;font-size:10.5px" data-fedit="${f.id}">✏️ 编辑</button>
+          <button class="btn sm" style="padding:4px 10px;font-size:10.5px" data-fdel="${f.id}">✕ 删除</button>
+        </div>
+      </div>`).join(''):'<div class="empty">还没有历史记录，点上方「记录今日穿搭」开始吧 📝</div>'}</div>
+  </div>`;
+};
+
+/* ⑫ 我的树洞 */
+R.树洞=()=>{
+  const notes=LS.get('tree',[]);
+  return `
+  <div class="head"><h1>🌙 我的树洞</h1><p>仅保存在本机浏览器 · 不上传任何服务器</p></div>
+  <div class="card tint" style="--acc:${PASTEL[4].acc};--bgc:${PASTEL[4].bgc}">
+    <h2>此刻想说点什么 <span class="badge">私密</span></h2>
+    <textarea class="ta lg" id="tree" placeholder="这里没有评判，只有你自己。写下情绪、秘密、不甘、想说却没人听的话…"></textarea>
+    <div class="hr"></div>
+    <button class="btn pri wide" style="--acc:${PASTEL[4].acc};--accs:${PASTEL[4].accs}" id="treesave">🔒 保存到本地树洞</button>
+    <div class="mini" style="margin-top:7px">数据仅存于当前浏览器 localStorage，清理浏览器数据会一并清除，请自行注意备份。</div>
+  </div>
+  <div class="card">
+    <h2>我的树洞记录 <span class="badge">${notes.length} 条</span></h2>
+    <div id="treelist">${notes.length?notes.map((n,i)=>`
+      <div class="note">
+        <div class="nt">${esc(n.t)}<span class="del" data-tdel="${i}">✕</span></div>
+        <div class="nc">${esc(n.c)}</div>
+      </div>`).join(''):'<div class="empty">树洞还是空的，把心里的话写下来吧 🌙</div>'}</div>
+  </div>
+  ${notes.length?`<div class="card"><button class="btn sm" id="treeclear">清空全部树洞记录</button></div>`:''}`;
+};
+
+/* =========================================================
+   事件绑定（每个模块渲染后调用）
+   ========================================================= */
+const EV={
+ 灵感(){
+    on('#qnext','onclick',()=>{const q=D.灵感;const cur=LS.get('qidx',{d:todayKey(),i:0});let i;do{i=(Math.random()*q.length)|0}while(q.length>1&&i===cur.i);LS.set('qidx',{d:todayKey(),i});const el=$('#qtext');el.style.opacity=0;el.style.transform='translateY(6px)';el.style.transition='opacity .18s ease,transform .18s ease';setTimeout(()=>{el.textContent=q[i];el.style.opacity=1;el.style.transform='none'},180);toast('换了一句 ✨')});
+    on('#inssave','onclick',()=>{
+      const el=$('#ins');const v=el.value.trim();if(!v)return toast('先写点什么吧');
+      const arr=LS.get('inspire',[]);arr.unshift({c:v,t:new Date().toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})});LS.set('inspire',arr);
+      el.value='';render('灵感');toast('已保存 ✅');
+    });
+    $$('[data-del]').forEach(b=>b.onclick=()=>{const arr=LS.get('inspire',[]);arr.splice(+b.dataset.del,1);LS.set('inspire',arr);render('灵感');toast('已删除')});
+  },
+ 口语(){
+    /* 朗读：统一 TTS 调用 */
+    const say=(txt,rate)=>{
+      if(!('speechSynthesis' in window))return toast('当前浏览器不支持语音朗读');
+      try{
+        speechSynthesis.cancel();
+        const u=new SpeechSynthesisUtterance(txt);
+        u.lang='en-US';u.rate=rate||.85;u.pitch=1;
+        const vs=speechSynthesis.getVoices().filter(v=>/en/i.test(v.lang));
+        if(vs.length)u.voice=vs[0];
+        speechSynthesis.speak(u);toast('🔊 正在朗读');
+      }catch(err){toast('朗读失败，请检查浏览器设置')}
+    };
+    /* 阅读：朗读全文（按今日推荐顺序取值） */
+    on('[data-rread]','onclick',b=>say(enReads()[+b.dataset.rread].en,.8),true);
+    /* 阅读：中文对照显示/隐藏 */
+    $$('[data-trans]').forEach(b=>b.onclick=()=>{
+      const i=b.dataset.trans, box=$('#rcn'+i);
+      const open=box.style.display!=='none';
+      box.style.display=open?'none':'block';
+      if(!open){box.style.opacity=0;box.style.transition='opacity .3s ease';requestAnimationFrame(()=>box.style.opacity=1)}
+      b.textContent=open?'🌐 显示中文对照':'🌐 收起中文对照';
+    });
+    /* 阅读：标记已读（写入当日记录，跨天自动归零） */
+    $$('[data-rdone]').forEach(b=>b.onclick=()=>{
+      const i=b.dataset.rdone;const log=dayDone('readdone');const d=log.k;
+      d[i]=!d[i];if(!d[i])delete d[i];dayDoneSave('readdone',log);render('口语',true);
+      if(d[i])toast('已标记已读 📖');
+    });
+    /* 阅读：分类筛选 */
+    $$('[data-rcat]').forEach(p=>p.onclick=()=>{LS.set('readcat',p.dataset.rcat);render('口语')});
+    /* 口语：跟读打卡（以句子内容为键，写入当日记录） */
+    $$('[data-chk]').forEach(b=>b.onclick=()=>{
+      const en=b.dataset.chk;const log=dayDone('speak');const d=log.k;
+      d[en]=!d[en];if(!d[en])delete d[en];dayDoneSave('speak',log);render('口语',true);
+      if(d[en])toast('打卡成功，继续加油 🎉');
+    });
+    /* 已完成折叠开关（阅读与口语共用，保持滚动位置） */
+    $$('[data-hidedone]').forEach(b=>b.onclick=()=>{
+      LS.set('hideDone',b.dataset.hidedone==='1');render('口语',true);
+    });
+    /* 口语：试听发音 */
+    on('[data-say]','onclick',b=>say(enSpeaks()[+b.dataset.say].en,.85),true);
+
+    /* ── 生词本：从阅读卡收藏 / 取消收藏 ── */
+    $$('[data-wadd]').forEach(el=>el.onclick=()=>{
+      const [en,cn,ri]=el.dataset.wadd.split('|');
+      const book=LS.get('vocab',[]);
+      const k='w|'+en;
+      const i=book.findIndex(v=>v.k===k);
+      if(i>=0){book.splice(i,1);toast('已取消收藏')}
+      else{
+        book.unshift({k,e:en,cn,cat:'生词',eg:'',ts:Date.now(),starWeek:weekKey(),mastered:false});
+        toast('已收藏到生词本 📒');
+      }
+      LS.set('vocab',book);render('口语');
+    });
+
+    /* ── 生词本：删除 ── */
+    $$('[data-vdel]').forEach(b=>b.onclick=()=>{
+      const k=b.dataset.vdel;const book=LS.get('vocab',[]).filter(v=>v.k!==k);
+      LS.set('vocab',book);render('口语');toast('已删除');
+    });
+
+    /* ── 生词本：标记掌握 / 取消掌握 ── */
+    $$('[data-vmaster]').forEach(b=>b.onclick=()=>{
+      const k=b.dataset.vmaster;const book=LS.get('vocab',[]);
+      const v=book.find(x=>x.k===k);if(!v)return;
+      v.mastered=!v.mastered;
+      if(v.mastered)v.masterWeek=weekKey();
+      LS.set('vocab',book);render('口语');
+      toast(v.mastered?'已标记为掌握 ✅':'已移回待掌握');
+    });
+
+    /* ── 生词本：从口语卡收藏短语（按今日轮换顺序取值） ── */
+    $$('[data-padd]').forEach(b=>b.onclick=()=>{
+      const i=+b.dataset.padd;const item=enSpeaks()[i];
+      const book=LS.get('vocab',[]);const k='p|'+item.en;
+      const ix=book.findIndex(v=>v.k===k);
+      if(ix>=0){book.splice(ix,1);toast('已取消收藏')}
+      else{
+        book.unshift({k,e:item.en,cn:item.cn,cat:'短语',eg:'',ts:Date.now(),starWeek:weekKey(),mastered:false});
+        toast('已收藏到生词本 📒');
+      }
+      LS.set('vocab',book);render('口语');
+    });
+
+    /* ── 生词本：朗读词条 ── */
+    $$('[data-vsay]').forEach(b=>b.onclick=()=>say(b.dataset.vsay,.85));
+
+    /* ── 生词本：筛选切换 ── */
+    $$('[data-vfilter]').forEach(b=>b.onclick=()=>{LS.set('vfilter',b.dataset.vfilter);render('口语')});
+
+    /* ── 每周复习：模式切换 ── */
+    $$('[data-weekmode]').forEach(b=>b.onclick=()=>{
+      LS.set('wmode',b.dataset.weekmode);LS.set('quizDone',{});render('口语');
+    });
+
+    /* ── 每周复习：揭晓 / 收起答案 ── */
+    $$('[data-qrev]').forEach(b=>b.onclick=()=>{
+      const k=b.dataset.qrev;const d=LS.get('quizDone',{});
+      d[k]=!d[k];if(!d[k])delete d[k];
+      LS.set('quizDone',d);render('口语');
+    });
+
+    /* ── 每周复习：发音 ── */
+    $$('[data-qsay]').forEach(b=>b.onclick=()=>say(b.dataset.qsay,.85));
+
+    /* ── 每周复习：记住了（同时标记掌握） ── */
+    $$('[data-qok]').forEach(b=>b.onclick=()=>{
+      const k=b.dataset.qok;const book=LS.get('vocab',[]);
+      const v=book.find(x=>x.k===k);if(v){v.mastered=true;v.masterWeek=weekKey();LS.set('vocab',book)}
+      /* 复习记录：按周累计 */
+      const hist=LS.get('reviewLog',{});
+      const wk=weekKey();hist[wk]=(hist[wk]||0)+1;LS.set('reviewLog',hist);
+      render('口语');toast('已记住，并计入本周复习 🎉');
+    });
+  },
+ 饮食(){
+    /* 餐次换一份：在"当前地区+当前季节"的三档菜单里轮换 */
+    $$('[data-menu]').forEach(b=>b.onclick=()=>{
+      const k=b.dataset.menu;
+      const cur=LS.get('menu_'+k,0)||0;
+      LS.set('menu_'+k,(cur+1)%3);render('饮食',true);
+      toast('换了一份 🍽️');
+    });
+    /* 旧版按钮（保留兼容） */
+    $$('[data-meal]').forEach(b=>b.onclick=()=>{
+      const k=b.dataset.meal;const cur=LS.get('meal_'+k,0)||0;
+      const arr=D.饮食[k];const nx=(cur+1)%arr.length;LS.set('meal_'+k,nx);render('饮食');
+      toast('换了一份 🍽️');
+    });
+
+    /* ── 习惯打卡：饮水 ── */
+    $$('[data-water]').forEach(b=>b.onclick=()=>{
+      const v=+b.dataset.water;
+      const h=dayDone('habit');
+      if(v===0)h.k.water=0;
+      else h.k.water=Math.max(0,Math.min(8000,(h.k.water||0)+v));
+      dayDoneSave('habit',h);
+      render('饮食',true);
+    });
+
+    /* ── 习惯打卡：晚餐时间 ── */
+    on('#dinnerset','onclick',()=>{
+      const el=$('#dinnertime');if(!el)return;
+      const v=el.value;
+      if(!v)return toast('请选择晚餐时间');
+      const h=dayDone('habit');h.k.dinner=v;dayDoneSave('habit',h);
+      render('饮食',true);
+      const hr=parseInt(v.split(':')[0],10);
+      toast(hr>=17&&hr<19?'晚餐时间很棒 ✅':'已记录，建议 17–19 点之间吃完');
+    });
+
+    /* ── 习惯打卡：进餐顺序 ── */
+    on('#orderbtn','onclick',()=>{
+      const h=dayDone('habit');
+      h.k.order=!h.k.order;dayDoneSave('habit',h);
+      render('饮食',true);
+      toast(h.k.order?'进餐顺序打卡成功 ✅':'已取消');
+    });
+
+    /* ── 地区切换 ── */
+    $$('[data-region]').forEach(b=>b.onclick=()=>{
+      const P=LS.get('body',null)||{sex:'f',height:165,weight:60,age:28,act:'light',goal:'lose'};
+      P.region=b.dataset.region;LS.set('body',P);
+      LS.set('menu_早餐',0);LS.set('menu_午餐',0);LS.set('menu_晚餐',0);
+      render('饮食',true);
+      toast('已切换为「'+REGION[b.dataset.region].n+'」口味');
+    });
+
+    /* 把推荐食谱记入今日（点击可取消），格式 meal|name|kcal */
+    $$('[data-add]').forEach(b=>b.onclick=()=>{
+      const [meal,name,k]=b.dataset.add.split('|');
+      const log=readKcal();
+      const i=log.items.findIndex(x=>x.meal===meal&&x.n===name);
+      if(i>=0)log.items.splice(i,1);
+      else log.items.push({n:name,k:+k||0,meal,ts:Date.now()});
+      log.d=todayKey();LS.set('kcal',log);render('饮食');
+      toast(i>=0?'已取消记录':'已记入今日 ✅');
+    });
+
+    /* 自由记录：添加自定义食物 */
+    const addFood=(name,kcal,meal)=>{
+      const n=String(name||'').trim();
+      const k=Math.round(+kcal);
+      if(!n)return toast('请填写食物名称');
+      if(!(k>0&&k<5000))return toast('热量请输入 1–5000 kcal');
+      if(n.length>40)return toast('食物名称过长');
+      const log=readKcal();
+      log.items.push({n,k,meal:meal||'加餐',ts:Date.now()});
+      log.d=todayKey();LS.set('kcal',log);render('饮食',true);
+      toast('已添加：'+n+' '+k+' kcal');
+    };
+    on('#fadd','onclick',()=>{
+      const meal=$('#fmeal')?$('#fmeal').value:'加餐';
+      const r=addFood($('#fname').value,$('#fkcal').value,meal);
+      if(r===undefined){const fn=$('#fname');/* 清空便于连续录入 */if(fn)fn.value='';const fk=$('#fkcal');if(fk)fk.value=''}
+    });
+    /* 回车快速提交 */
+    const fe=$('#fkcal');
+    if(fe)fe.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();const b=$('#fadd');if(b)b.click()}};
+    const fne=$('#fname');
+    if(fne)fne.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();const b=$('#fadd');if(b)b.click()}};
+
+    /* 推荐餐食一键记入 */
+    $$('[data-radd]').forEach(b=>b.onclick=()=>{
+      const [meal,name,k]=b.dataset.radd.split('|');
+      const log=readKcal();
+      const i=log.items.findIndex(x=>x.meal===meal&&x.n===name);
+      if(i>=0)log.items.splice(i,1);
+      else log.items.push({n:name,k:+k||0,meal,ts:Date.now()});
+      log.d=todayKey();LS.set('kcal',log);render('饮食',true);
+      toast(i>=0?'已取消记录':'已记入 '+meal+' ✅');
+    });
+
+    /* 常用食物快捷添加 */
+    $$('[data-quick]').forEach(el=>el.onclick=()=>{
+      const [n,k]=el.dataset.quick.split('|');
+      const meal=$('#fmeal')?$('#fmeal').value:'加餐';
+      addFood(n,k,meal);
+    });
+
+    /* 删除单条饮食记录 */
+    $$('[data-fdel]').forEach(b=>b.onclick=()=>{
+      const i=+b.dataset.fdel;const log=readKcal();
+      const it=log.items[i];if(!it)return;
+      log.items.splice(i,1);log.d=todayKey();LS.set('kcal',log);
+      render('饮食',true);toast('已删除「'+it.n+'」');
+    });
+
+    /* 清空今日 */
+    on('#kcalreset','onclick',()=>{
+      const log=readKcal();
+      if(!log.items.length)return toast('今日还没有记录');
+      if(!confirm('清空今日全部饮食记录？'))return;
+      LS.set('kcal',{d:todayKey(),items:[]});render('饮食',true);toast('已清空今日记录');
+    });
+
+    /* ── 体质档案：目标切换（即时生效） ── */
+    $$('[data-goal]').forEach(b=>b.onclick=()=>{
+      const P=LS.get('body',null)||{sex:'f',height:165,weight:60,age:28,act:'light',goal:'lose'};
+      P.goal=b.dataset.goal;LS.set('body',P);render('饮食',true);
+      toast('目标已切换为「'+b.textContent.trim()+'」');
+    });
+    /* ── 体质档案：保存并重新计算 ── */
+    on('#bsave','onclick',()=>{
+      const g=id=>{const el=$(id);return el?el.value:''};
+      const h=parseFloat(g('#bh')),w=parseFloat(g('#bw')),a=parseInt(g('#bage'),10);
+      const sex=g('#bsex')||'f',actv=g('#bact')||'light';
+      if(!(h>=80&&h<=250))return toast('身高请输入 80–250 cm');
+      if(!(w>=20&&w<=300))return toast('体重请输入 20–300 kg');
+      if(!(a>=10&&a<=100))return toast('年龄请输入 10–100 岁');
+      const P=LS.get('body',null)||{goal:'lose'};
+      LS.set('body',{sex,height:h,weight:Math.round(w*10)/10,age:a,act:actv,goal:P.goal||'lose',region:P.region||'hd'});
+      render('饮食',true);toast('已保存，热量缺口已重新计算 ✅');
+    });
+  },
+ 运动(){
+    const tog=k=>{const r=LS.get('ex',{});r[k]=!r[k];if(!r[k])delete r[k];LS.set('ex',r);render('运动');toast(r[k]?'打卡成功 ✅':'已取消打卡')};
+    $$('#cal .d:not(.blank)').forEach(d=>d.onclick=()=>tog(d.dataset.day));
+    on('#extoday','onclick',()=>tog(todayKey()));
+    on('#exclear','onclick',()=>{if(confirm('确定清空所有运动打卡记录？')){LS.set('ex',{});render('运动');toast('已清空')}});
+  },
+ 新闻(){
+    $$('#newstabs .pill').forEach(p=>p.onclick=()=>{LS.set('newscat',p.dataset.cat);render('新闻')});
+
+    /* ── 点击条目打开原文 ── */
+    $$('#newslist [data-link]').forEach(el=>el.onclick=()=>{window.open(el.dataset.link,'_blank')});
+
+    /* ── 抓取与渲染 ── */
+    const doFetch=(cat,silent)=>{
+      if(!silent)toast('正在获取'+cat+'实时新闻…');
+      const last=LS.get(NEWS_LAST,{})||{};
+      last[cat]=Date.now();LS.set(NEWS_LAST,last);
+      return newsFetch(cat).then(items=>{
+        if(current==='新闻')render('新闻',true);
+        if(!silent)toast('已更新今日'+cat+'资讯 ✅ '+items.length+' 条');
+      }).catch(()=>{
+        if(current==='新闻'&&!silent)toast('实时新闻获取失败，可稍后再试');
+      });
+    };
+
+    /* 手动刷新 */
+    on('#newsrefresh','onclick',()=>{
+      const cat=LS.get('newscat','科技');
+      const b=$('#newsrefresh');if(b){b.style.opacity=.5}
+      doFetch(cat,false).finally(()=>{if(b)b.style.opacity=1});
+    });
+
+    /* ── 进入模块按需自动刷新：无当日缓存或已过期，且 5 分钟内未尝试过 ── */
+    (function autoNews(){
+      const cat=LS.get('newscat','科技');
+      if(newsFresh(cat))return;                 /* 30 分钟内刚抓过 */
+      const last=LS.get(NEWS_LAST,{})||{};
+      if(Date.now()-(last[cat]||0)<5*60*1000)return;   /* 防抖 */
+      doFetch(cat,true);                        /* 静默后台刷新 */
+    })();
+  },
+ 书籍(){
+    $$('[data-bm]').forEach(p=>p.onclick=()=>{LS.set('bookm',p.dataset.bm);render('书籍')});
+  },
+ 理财(){
+    on('#goaladdbtn','onclick',()=>{
+      const v=parseFloat($('#goaladd').value);if(!v||v<=0)return toast('请输入有效金额');
+      const g=LS.get('goal',{name:'存钱目标',target:50000,cur:0});g.cur=Math.round((g.cur+v)*100)/100;LS.set('goal',g);render('理财');toast('已存入 ¥'+v.toLocaleString());
+    });
+    on('#goaltarget','onchange',e=>{
+      const v=parseFloat(e.target.value);if(!v||v<=0)return;
+      const g=LS.get('goal',{name:'存钱目标',target:50000,cur:0});g.target=Math.round(v);LS.set('goal',g);render('理财');toast('目标已更新');
+    });
+    on('#goalreset','onclick',()=>{if(confirm('重置存钱记录？已存金额将归零。')){LS.set('goal',{name:'存钱目标',target:50000,cur:0});render('理财');toast('已重置')}});
+  },
+ 信息差(){
+    $$('[data-kind]').forEach(p=>p.onclick=()=>{LS.set('infokind',p.dataset.kind);render('信息差')});
+  },
+ 修心(){
+    $$('[data-mind]').forEach(c=>c.onclick=()=>{
+      const i=c.dataset.mind;const tk=todayKey();const r=LS.get('mind',{});const t=r[tk]||{};
+      t[i]=!t[i];if(!t[i])delete t[i];r[tk]=t;LS.set('mind',r);render('修心');
+      if(t[i]){
+        const hist=LS.get('mindHist',[]);if(!hist.includes(tk)){hist.push(tk);LS.set('mindHist',hist.slice(-400))}
+      }
+    });
+    on('#refsave','onclick',()=>{
+      const tk=todayKey();const all=LS.get('refnote',{});all[tk]=$('#ref').value;LS.set('refnote',all);toast('今日自省已保存 ✅');
+    });
+  },
+ 博客(){},
+ 穿搭(){
+    /* ── 天气：自动获取（支持手动刷新；成功后清除手动覆盖） ── */
+    const doFetch=(silent)=>{
+      if(!silent)toast('正在获取当地天气…');
+      LS.set(WX_LAST,Date.now());
+      return fetchWeather().then(w=>{
+        w.manual=false;
+        LS.set('weather',w);
+        LS.set('wxManual',null);            /* 自动获取成功 → 手动覆盖失效 */
+        if(current==='穿搭')render('穿搭',true);
+        toast('已更新 '+w.city+' 天气 '+w.t+'° '+wmoOf(w.code).n+' ✅');
+      }).catch(e=>{
+        if(!current||current!=='穿搭')return;   /* 用户已离开，不再打扰 */
+        toast(e&&e.code==='geo'
+          ? '定位未授权，可在下方手动填写天气'
+          : '天气获取失败，请检查网络或手动填写');
+      });
+    };
+    on('#wxget','onclick',()=>doFetch(false));
+    on('#wxget2','onclick',()=>doFetch(false));
+
+    /* ── 天气：进入模块时按需自动刷新 ──
+       触发条件：手动填写过则跳过（尊重用户输入）；其余情况在
+       ① 无天气数据、或 ② 数据已过 1 小时，且距上次尝试超过 5 分钟时刷新。 */
+    (function autoWx(){
+      const manual=LS.get('wxManual',null);
+      if(manual)return;                     /* 用户手动填过 → 不覆盖 */
+      const w=LS.get('weather',null);
+      if(wxFresh(w))return;                 /* 1 小时内刚取过 → 不打扰 */
+      const last=LS.get(WX_LAST,0);
+      if(Date.now()-last<WX_REFRESH_GAP)return;  /* 防抖：5 分钟内不重复请求 */
+      doFetch(true);
+    })();
+
+    /* ── 天气：手动填写 ── */
+    on('#wxset','onclick',()=>{
+      const t=parseInt($('#wxt')&&$('#wxt').value,10);
+      const code=parseInt($('#wxcode')&&$('#wxcode').value,10);
+      const city=($('#wxcity')&&$('#wxcity').value.trim())||'手动填写';
+      if(!(t>=-50&&t<=60))return toast('温度请输入 -50 ~ 60 ℃');
+      LS.set('wxManual',{t,feels:t,code,city,manual:true,hum:null,wind:null,daily:[],at:Date.now()});
+      render('穿搭',true);toast('已保存今日天气 ✅');
+    });
+
+    /* ── 穿搭录入面板 ── */
+    const openPanel=(editId)=>{
+      const tk=todayKey();
+      const log=LS.get('fitLog',[]);
+      const cur=editId!=null?log.find(f=>f.id===editId):log.find(f=>f.d===tk);
+      const w=LS.get('wxManual',null)||LS.get('weather',null);
+      const selS=cur?cur.style:'', selC=cur?cur.color:'';
+      const selI=(cur&&cur.items)||[];
+      const panel=$('#fitpanel');if(!panel)return;
+      panel.innerHTML=`
+      <div class="card" style="--acc:${PASTEL[5].acc};margin-top:10px">
+        <h2>${editId!=null?'✏️ 编辑穿搭':'📝 记录今日穿搭'} <span class="badge">${esc(tk)}</span></h2>
+        <div class="mini" style="margin-bottom:6px">上传一张照片（可选）</div>
+        <input type="file" id="fitfile" accept="image/*" style="display:none">
+        <div style="display:flex;gap:9px;align-items:center;margin-bottom:9px">
+          <img id="fitprev" src="${cur&&cur.img?cur.img:''}" alt="" style="width:74px;height:98px;object-fit:cover;border-radius:10px;background:${PASTEL[5].tg};${cur&&cur.img?'':'display:none'}">
+          <div style="flex:1 1 auto;min-width:0;display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn sm" id="fitpick">📷 选择/更换照片</button>
+            <button class="btn sm" id="fitclear" style="${cur&&cur.img?'':'display:none'};padding:4px 10px;font-size:10.5px">✕ 移除</button>
+          </div>
+        </div>
+        <div class="hr"></div>
+        <div class="mini" style="margin-bottom:5px">🎨 风格</div>
+        <div id="fitsty">${D.穿搭风格.map(s=>`<span class="tag" data-fs="${s.k}" style="cursor:pointer;background:${s.k===selS?PASTEL[5].acc:PASTEL[5].tg};color:${s.k===selS?'#fff':'inherit'}">${s.e} ${s.k}</span>`).join('')}</div>
+        <div class="mini" style="margin:8px 0 5px">🎨 色系</div>
+        <div id="fitcol">${D.穿搭色系.map(c=>`<span class="tag" data-fc="${c.k}" style="cursor:pointer;background:${c.k===selC?PASTEL[5].acc:PASTEL[5].tg};color:${c.k===selC?'#fff':'inherit'}">${c.e} ${c.k}</span>`).join('')}</div>
+        <div class="mini" style="margin:8px 0 5px">👕 单品（可多选）</div>
+        <div id="fititems">${D.穿搭品类.map(it=>`<span class="tag" data-fi="${it.n}" style="cursor:pointer;background:${selI.includes(it.n)?PASTEL[5].acc:PASTEL[5].tg};color:${selI.includes(it.n)?'#fff':'inherit'}">${it.e} ${it.n}</span>`).join('')}</div>
+        <div class="hr"></div>
+        <textarea class="ta" id="fitnote" placeholder="补充描述（可选）：例如 白色衬衫配浅蓝牛仔，搭了小白鞋">${esc(cur?cur.note:'')}</textarea>
+        <div class="hr"></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn pri" style="--acc:${PASTEL[5].acc};--accs:${PASTEL[5].accs};flex:1 1 auto" id="fitsave">💾 保存</button>
+          <button class="btn" id="fitcancel">取消</button>
+        </div>
+        <div class="mini" style="margin-top:7px">图片会自动压缩后保存在本机浏览器，不上传任何服务器。当前占用约 ${(lsBytes()/1024/1024).toFixed(2)} MB。</div>
+      </div>`;
+      /* 面板内的临时选择状态 */
+      let imgData=cur&&cur.img?cur.img:'';
+      let pickStyle=selS, pickColor=selC, pickItems=selI.slice();
+      on('#fitpick','onclick',()=>$('#fitfile').click());
+      on('#fitfile','onchange',async e=>{
+        const f=e.target.files&&e.target.files[0];if(!f)return;
+        if(!/^image\//.test(f.type))return toast('请选择图片文件');
+        toast('正在压缩图片…');
+        try{
+          const r=await compressImage(f,900,.72);
+          imgData=r.data;
+          const pv=$('#fitprev');pv.src=imgData;pv.style.display='block';
+          if($('#fitclear'))$('#fitclear').style.display='';
+          toast('图片已就绪（'+r.w+'×'+r.h+'）✅');
+        }catch(err){toast('图片处理失败，换个格式试试')}
+        e.target.value='';                       /* 允许重复选同一张 */
+      });
+      on('#fitclear','onclick',()=>{imgData='';const pv=$('#fitprev');pv.src='';pv.style.display='none';$('#fitclear').style.display='none'});
+      /* 标签点选：风格与色系单选，单品多选 */
+      $$('#fitsty [data-fs]').forEach(el=>el.onclick=()=>{
+        pickStyle=(pickStyle===el.dataset.fs?'':el.dataset.fs);
+        $$('#fitsty [data-fs]').forEach(x=>{
+          const on=x.dataset.fs===pickStyle;
+          x.style.background=on?PASTEL[5].acc:PASTEL[5].tg;x.style.color=on?'#fff':'inherit';
+        });
+      });
+      $$('#fitcol [data-fc]').forEach(el=>el.onclick=()=>{
+        pickColor=(pickColor===el.dataset.fc?'':el.dataset.fc);
+        $$('#fitcol [data-fc]').forEach(x=>{
+          const on=x.dataset.fc===pickColor;
+          x.style.background=on?PASTEL[5].acc:PASTEL[5].tg;x.style.color=on?'#fff':'inherit';
+        });
+      });
+      $$('#fititems [data-fi]').forEach(el=>el.onclick=()=>{
+        const n=el.dataset.fi, i=pickItems.indexOf(n);
+        if(i>=0)pickItems.splice(i,1);else pickItems.push(n);
+        const on=pickItems.includes(n);
+        el.style.background=on?PASTEL[5].acc:PASTEL[5].tg;el.style.color=on?'#fff':'inherit';
+      });
+      on('#fitcancel','onclick',()=>{panel.innerHTML=''});
+      on('#fitsave','onclick',()=>{
+        const note=($('#fitnote')&&$('#fitnote').value.trim())||'';
+        if(!imgData&&!note&&!pickItems.length&&!pickStyle&&!pickColor)return toast('至少填写一项内容或上传照片');
+        const arr=LS.get('fitLog',[]);
+        const wxTxt=w?(w.t+'° '+wmoOf(w.code).n+(w.city?' '+w.city:'')):'';
+        if(editId!=null){
+          const it=arr.find(f=>f.id===editId);
+          if(it){it.img=imgData;it.style=pickStyle;it.color=pickColor;it.items=pickItems.slice();it.note=note}
+        }else{
+          const ex=arr.find(f=>f.d===tk);
+          const rec={id:'f'+Date.now(),d:tk,img:imgData,style:pickStyle,color:pickColor,items:pickItems.slice(),note,wx:wxTxt,manual:!!(w&&w.manual)};
+          if(ex)Object.assign(ex,rec);else arr.unshift(rec);
+        }
+        try{LS.set('fitLog',arr)}
+        catch(e){toast('本地空间不足，请先删除部分历史图片');return}
+        panel.innerHTML='';render('穿搭',true);toast('已保存，推荐已同步更新 ✅');
+      });
+    };
+    on('#fitopen','onclick',()=>openPanel(null));
+
+    /* ── 历史：编辑 / 删除 ── */
+    $$('[data-fedit]').forEach(b=>b.onclick=()=>{
+      openPanel(b.dataset.fedit);
+      const p=$('#fitpanel');if(p&&p.scrollIntoView)p.scrollIntoView({behavior:'smooth',block:'start'});
+    });
+    $$('[data-fdel]').forEach(b=>b.onclick=()=>{
+      if(!confirm('删除这条穿搭记录？'))return;
+      const arr=LS.get('fitLog',[]).filter(f=>f.id!==b.dataset.fdel);
+      LS.set('fitLog',arr);render('穿搭',true);toast('已删除');
+    });
+  },
+ 树洞(){
+    on('#treesave','onclick',()=>{
+      const v=$('#tree').value.trim();if(!v)return toast('先写点什么吧');
+      const arr=LS.get('tree',[]);arr.unshift({c:v,t:new Date().toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})});LS.set('tree',arr);
+      render('树洞');toast('已锁进树洞 🔒');
+    });
+    $$('[data-tdel]').forEach(b=>b.onclick=()=>{
+      if(!confirm('删除这条记录？'))return;
+      const arr=LS.get('tree',[]);arr.splice(+b.dataset.tdel,1);LS.set('tree',arr);render('树洞');toast('已删除');
+    });
+    on('#treeclear','onclick',()=>{if(confirm('确定清空全部树洞记录？此操作不可恢复。')){LS.set('tree',[]);render('树洞');toast('已清空')}});
+  }
+};
+
+/* =========================================================
+   每日自动刷新
+   ---------------------------------------------------------
+   纯前端无法在浏览器关闭时后台运行，因此采用两种机制：
+   1) 页面保持打开 → 每分钟检测跨天，自动重置当日数据并刷新
+   2) 打开/切回页面 → 立即检测，若已是新的一天则自动更新
+   ========================================================= */
+const DAY_KEY='dayMark';           /* 记录最近一次渲染所属的日期 */
+let dayTimer=null;
+
+/* 重置所有"按日"数据，让新的一天从干净状态开始 */
+function rolloverDay(tk){
+  /* 今日热量记录 */
+  const log=LS.get('kcal',null);
+  if(log&&log.d!==tk)LS.set('kcal',{d:tk,items:[]});
+  /* 每日灵感金句 */
+  const q=LS.get('qidx',null);
+  if(q&&q.d!==tk)LS.set('qidx',{d:tk,i:(Math.random()*D.灵感.length)|0});
+  /* 今日自省 */
+  const r=LS.get('reflect',null);
+  if(r&&r.d!==tk)LS.set('reflect',{d:tk,i:(Math.random()*D.自省.length)|0});
+  /* 理财今日重点 */
+  const pl=LS.get('plan',null);
+  if(pl)LS.set('plan',{d:tk,list:shuffle(D.理财).slice(0,3).map(x=>x.n)});
+  /* 英语：重排今日资讯与口语内容（进度与生词本为累计数据，保留不变）
+     注意：此处用"旧标记 + 新日期"作为种子，避免当天打开时
+     dayMark 已等于今天却因缓存的函数上下文导致 enDay 未被更新。 */
+  reshuffleEN();
+  ensureEN();
+  LS.set('enDay',tk);                       /* 记录英语内容所属日期，便于回溯 */
+  window.__enOrder=_enRead?_enRead.map(r=>r.src+':'+r.title):[];
+  /* 英语打卡状态按日归零：新的一天从"未读 / 未打卡"重新开始
+     （生词本、每周复习记录为累计数据，不在此处重置） */
+  if(LS.get('readdone',null)!==null)LS.set('readdone',{d:tk,k:{}});
+  if(LS.get('speak',null)!==null)LS.set('speak',{d:tk,k:{}});
+  /* 天气：跨天后昨日天气预报已失效，清掉自动获取的缓存，
+     交由穿搭模块的按需自动刷新重新拉取，避免展示隔夜数据。
+     手动填写的天气（wxManual）按用户意图保留。 */
+  LS.set('weather',null);
+  LS.set(WX_LAST,0);
+  /* 新闻：跨天后昨日资讯已过期，清空缓存让新闻模块重新抓取当日内容 */
+  LS.set('newsCache',null);
+  LS.set(NEWS_LAST,{});
+  /* 饮食习惯打卡（饮水 / 晚餐时间 / 进餐顺序）：按日归零 */
+  const hb=LS.get('habit',null);
+  if(hb&&hb.d!==tk)LS.set('habit',{d:tk,k:{}});
+  LS.set(DAY_KEY,tk);
+}
+
+/* 检测是否需要跨天刷新；返回是否发生了刷新 */
+function checkDay(){
+  const tk=todayKey();
+  const mark=LS.get(DAY_KEY,null);
+  if(mark===tk)return false;
+  rolloverDay(tk);
+  /* 重新渲染当前模块，让新数据立即生效 */
+  if(current)render(current);
+  if(typeof paintDate==='function')paintDate();
+  const changed=!!mark;      /* 首次打开不算"跨天"，不提示 */
+  if(changed)toast('已是新的一天，已为你刷新 ☀️（含英语资讯与天气）');
+  return changed;
+}
+
+/* 每分钟检测一次；页面切回可见时也立即检测（后台标签页定时器会被节流） */
+function startDayWatch(){
+  if(dayTimer)clearInterval(dayTimer);
+  dayTimer=setInterval(checkDay,60000);
+  window.__dayTimer=dayTimer;               /* 暴露句柄，便于检测与清理 */
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='visible')checkDay();
+  });
+}
+
+/* 手动刷新：换新当日随机内容并重渲染（不重置录入类数据） */
+function refreshToday(){
+  const tk=todayKey();
+  LS.set('qidx',{d:tk,i:(Math.random()*D.灵感.length)|0});
+  LS.set('reflect',{d:tk,i:(Math.random()*D.自省.length)|0});
+  LS.set('plan',{d:tk,list:shuffle(D.理财).slice(0,3).map(x=>x.n)});
+  /* 英语：重新抽取今日内容（重新播种，顺序会变化） */
+  reshuffleEN();
+  ensureEN();
+  LS.set('enDay',tk);
+  window.__enOrder=_enRead?_enRead.map(r=>r.src+':'+r.title):[];
+  /* 天气：手动刷新时一并刷新（仅在有自动天气或非手动模式下发起，避免覆盖手动输入） */
+  LS.set(WX_LAST,0);
+  if(LS.get('weather',null)&&!LS.get('wxManual',null)){
+    const _sm='refreshToday';window[_sm+'_wx']=1;
+    fetchWeather().then(w=>{w.manual=false;LS.set('weather',w);LS.set(WX_LAST,Date.now());
+      if(current==='穿搭')render('穿搭',true);
+    }).catch(()=>{});
+  }
+  LS.set(DAY_KEY,tk);
+  const stamp=new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
+  LS.set('lastRefresh',stamp);
+  if(current)render(current);
+  toast('已刷新今日内容（含英语资讯与天气）· '+stamp);
+}
+
+/* =========================================================
+   主控制器
+   ========================================================= */
+let current=null;
+function render(k,keepScroll){
+  const same=current===k;
+  current=k;
+  const m=MODULES.find(x=>x.k===k);
+  const acc=PASTEL[MODULES.indexOf(m)%PASTEL.length];
+  const main=$('#main');
+  const y=main.scrollTop;
+  main.innerHTML=R[k]();
+  main.style.setProperty('--acc',acc.acc);
+  main.style.setProperty('--accs',acc.accs);
+  EV[k]&&EV[k]();
+  if(keepScroll||same){main.scrollTop=y}   /* 模块内交互：保持滚动位置 */
+  else{main.scrollTop=0}                    /* 切换模块：回到顶部 */
+}
+function go(k){
+  if(current===k)return;
+  $$('#nav .navitem').forEach(n=>n.classList.toggle('on',n.dataset.k===k));
+  LS.set('last',k);
+  render(k);
+}
+function buildNav(){
+  const nav=$('#nav');
+  MODULES.forEach((m,i)=>{
+    const p=PASTEL[i%PASTEL.length];
+    const el=document.createElement('div');
+    el.className='navitem';el.dataset.k=m.k;
+    el.style.setProperty('--acc',p.acc);
+    el.innerHTML=`<span class="dot"></span><span class="ico">${m.ico}</span><span class="txt">${m.name}</span>`;
+    el.onclick=()=>go(m.k);
+    nav.appendChild(el);
+  });
+}
+
+/* 顶栏日期显示：月/日 + 星期 */
+function paintDate(){
+  const el=$('#bdate');if(!el)return;
+  const d=new Date();
+  const wd=['日','一','二','三','四','五','六'][d.getDay()];
+  el.textContent=(d.getMonth()+1)+'/'+d.getDate()+' 周'+wd;
+}
+
+/* 启动 */
+buildNav();
+paintDate();
+LS.set(DAY_KEY,todayKey());          /* 首次打开标记为今天，不触发跨天提示 */
+ensureEN();LS.set('enDay',todayKey());/* 按打开当天生成英语内容顺序 */
+go(LS.get('last','灵感')||'灵感');
+startDayWatch();                     /* 开启跨天自动刷新 */
+
+/* 手动刷新按钮 */
+(function(){
+  const b=$('#brefresh');if(!b)return;
+  b.onclick=()=>{
+    b.classList.remove('spin');
+    void b.offsetWidth;              /* 重置动画 */
+    b.classList.add('spin');
+    setTimeout(()=>b.classList.remove('spin'),420);
+    refreshToday();
+    paintDate();
+  };
+})();
+
+/* 防止某些浏览器双指缩放导致横向溢出 */
+document.addEventListener('touchmove',e=>{if(e.touches.length>1)e.preventDefault()},{passive:false});
+/* 桌面端键盘导航（可选） */
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;
+  const i=MODULES.findIndex(x=>x.k===current);
+  if(e.key==='ArrowDown'&&i<MODULES.length-1)go(MODULES[i+1].k);
+  if(e.key==='ArrowUp'&&i>0)go(MODULES[i-1].k);
+});
+</script>
+</body>
+</html>
