@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232E4A7D'/%3E%3Ctext x='16' y='22' font-size='16' text-anchor='middle' fill='%23fff'%3E%E2%9A%93%3C/text%3E%3C/svg%3E">
+<title>个人成长打卡 · 三锚日记</title>
+<style>
+:root{--navw:15%}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:#F7F6F2;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:#3A3A3A}
+#app{display:flex;height:100dvh}
+/* ── 左侧导航 ── */
+#nav{width:15%;background:#EFEEE9;display:flex;flex-direction:column;align-items:center;padding:10px 0;gap:2px;overflow:hidden;flex:0 0 auto}
+#brand{width:34px;height:34px;border-radius:10px;background:#2E4A7D;color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;margin-bottom:8px}
+.navitem{width:88%;padding:8px 2px;border-radius:10px;text-align:center;font-size:10.5px;color:#6B6B6B;cursor:pointer;line-height:1.35;transition:background .15s}
+.navitem .ic{display:block;font-size:16px;margin-bottom:2px}
+.navitem.on{background:#2E4A7D;color:#fff;font-weight:600}
+/* ── 主区 ── */
+#main{width:85%;height:100dvh;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:14px 12px 40px}
+.head h1{font-size:18px;letter-spacing:-.3px}
+.head p{font-size:10.5px;color:#9A9A9A;margin-top:2px}
+.card{background:#fff;border-radius:14px;padding:13px 13px;margin-top:11px;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.card.tint{background:var(--bgc,#fff);border:1px solid var(--bd,transparent)}
+h2{font-size:13.5px;font-weight:700;letter-spacing:-.2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.badge{font-size:9.5px;font-weight:600;background:#EEF2F8;color:#2E4A7D;border-radius:20px;padding:2.5px 8px;white-space:nowrap;word-break:keep-all}
+.mini{font-size:10.5px;color:#8A8A8A;line-height:1.7}
+.hr{height:1px;background:rgba(0,0,0,.06);margin:9px 0}
+.btn{border:1px solid rgba(0,0,0,.1);background:#fff;border-radius:20px;padding:7px 13px;font-size:11.5px;color:#3A3A3A;cursor:pointer;font-family:inherit}
+.btn.pri{background:var(--acc,#2E4A7D);color:#fff;border-color:transparent}
+.btn.sm{padding:5px 10px;font-size:10.5px}
+.btn.wide{width:100%}
+.in{width:100%;border:1px solid rgba(0,0,0,.12);border-radius:10px;padding:8px 10px;font-size:12.5px;font-family:inherit;background:#fff;outline:none}
+.in:focus{border-color:#2E4A7D}
+textarea.in{resize:none;line-height:1.7;min-height:64px}
+/* 模式按钮 */
+.modes{display:flex;gap:6px}
+.modes .btn{flex:1;padding:8px 2px;font-size:11px;text-align:center}
+/* 三锚行 */
+.anchor{background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:12px;padding:9px 10px;margin-bottom:7px}
+.anchor.done{border-color:#3E8E5A;background:#F3FAF5}
+.a-top{display:flex;align-items:flex-start;gap:7px}
+.a-chk{flex:0 0 22px;width:22px;height:22px;border-radius:50%;border:1.5px solid #C9C9C9;display:flex;align-items:center;justify-content:center;font-size:12px;color:transparent;cursor:pointer;margin-top:1px}
+.anchor.done .a-chk{background:#3E8E5A;border-color:#3E8E5A;color:#fff}
+.a-name{flex:1 1 auto;min-width:0;font-size:12px;font-weight:600;line-height:1.55;word-break:break-word}
+.anchor.done .a-name{color:#3E8E5A}
+.a-edit{flex:0 0 auto;font-size:13px;color:#BDBDBD;cursor:pointer;padding:0 2px}
+.a-in{margin-top:7px}
+/* 判定条 */
+.verdict{border-radius:12px;padding:10px 12px;font-size:12px;line-height:1.7;font-weight:600}
+.verdict.pass{background:#E8F5EC;color:#2F7A4D}
+.verdict.fail{background:#FDEEEC;color:#B5493A}
+.verdict.none{background:#F1F1F1;color:#8A8A8A;font-weight:400}
+/* B区字段 */
+.field{margin-bottom:9px}
+.field label{display:block;font-size:11px;font-weight:600;color:#6B6B6B;margin-bottom:4px}
+/* 日历 */
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal .wd{font-size:9px;color:#B0B0B0;text-align:center;padding:2px 0}
+.cal .d{aspect-ratio:1;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10.5px;background:#F4F4F4;color:#8A8A8A;cursor:pointer;position:relative}
+.cal .d.today{outline:2px solid #2E4A7D;outline-offset:-2px;font-weight:700;color:#2E4A7D}
+.cal .d.blank{background:transparent;cursor:default}
+.cal .d .dot{position:absolute;bottom:2px;width:4px;height:4px;border-radius:50%}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.stat{background:#fff;border-radius:12px;padding:9px;text-align:center}
+.stat b{display:block;font-size:16px;letter-spacing:-.5px}
+.stat span{font-size:9.5px;color:#9A9A9A}
+.empty{padding:18px 0;text-align:center;font-size:11px;color:#B0B0B0}
+.tag{display:inline-block;font-size:9.5px;border-radius:6px;padding:2px 7px;margin:2px 3px 2px 0}
+.pill{font-size:10px;border-radius:14px;padding:3px 9px;display:inline-block;margin:0 4px 4px 0;cursor:pointer}
+/* toast */
+#toast{position:fixed;left:50%;bottom:60px;transform:translateX(-50%);background:rgba(40,40,40,.9);color:#fff;font-size:11.5px;padding:8px 16px;border-radius:20px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:99;max-width:80%;text-align:center}
+#toast.show{opacity:1}
+details.fold summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600}
+details.fold summary::-webkit-details-marker{display:none}
+details.fold summary .arw{margin-left:auto;font-size:9px;color:#B0B0B0;transition:transform .2s}
+details.fold[open] summary .arw{transform:rotate(90deg)}
+.hrec{font-size:11.5px;line-height:1.8;border-bottom:1px dashed rgba(0,0,0,.07);padding:7px 0}
+</style>
+</head>
+<body>
+<div id="app">
+  <nav id="nav">
+    <div id="brand">锚</div>
+    <div class="navitem on" data-tab="today"><span class="ic">✅</span>今日打卡</div>
+    <div class="navitem" data-tab="calendar"><span class="ic">📅</span>打卡日历</div>
+    <div class="navitem" data-tab="review"><span class="ic">📊</span>阶段复盘</div>
+    <div class="navitem" data-tab="settings"><span class="ic">⚙️</span>设置</div>
+  </nav>
+  <main id="main"></main>
+</div>
+<div id="toast"></div>
+<script>
+/* ===== 基础 ===== */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const LS={
+  get(k,d){try{const v=localStorage.getItem('gc_'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},
+  set(k,v){try{localStorage.setItem('gc_'+k,JSON.stringify(v))}catch(e){}}
+};
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const todayKey=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()};
+const parseKey=k=>{const [y,m,dd]=k.split('-').map(Number);return new Date(y,m-1,dd)};
+const fmtCN=k=>{const d=parseKey(k);return d.getFullYear()+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0')};
+const pad2=n=>String(n).padStart(2,'0');
+let current='today';
+const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._tm);t._tm=setTimeout(()=>t.classList.remove('show'),1800)};
+
+/* ===== 模式与锚点 ===== */
+/* 三种模式各有默认三锚；用户可自行修改每个锚点的文字（按模式保存） */
+const MODES={
+  work:{n:'工作日',ic:'💼',bgc:'#EAF1FB',bd:'#D6E2F5',acc:'#2E4A7D',
+    d:'上班/上课日，刚性推进',
+    anchors:['规律作息（目标 24:00 前睡）','专业与知识学习（简历复盘/面试 ≥3 小时）','深度学习或输出（≥2 小时，二选一即可）']},
+  home:{n:'居家',ic:'🏠',bgc:'#EAF6EE',bd:'#D3EBDC',acc:'#3E8E5A',
+    d:'居家全力日，节奏自控',
+    anchors:['规律作息（24:00 前睡，8 小时起）','居家锻炼 20 分钟或散步 6000 步','学习 / 输出 ≥1 小时（课程·阅读·复盘）']},
+  out:{n:'外出',ic:'🚗',bgc:'#FBF3E7',bd:'#F2E2C8',acc:'#B07C2E',
+    d:'外出日，弹性最低目标',
+    anchors:['按时起床，不打乱昼夜节奏','保持 30 分钟阅读或听力输入','记录 1 条见闻 / 灵感（外出不空过）']}
+};
+const MODE_KEYS=Object.keys(MODES);
+const anchorsOf=mode=>{
+  const saved=LS.get('anchors_'+mode,null);
+  const def=MODES[mode].anchors;
+  return def.map((t,i)=>(saved&&saved[i]&&saved[i].trim())||t);
+};
+const saveAnchor=(mode,i,text)=>{
+  const cur=LS.get('anchors_'+mode,null)||[...def0(mode)];
+  function def0(){return []}
+  const base=LS.get('anchors_'+mode,null)||MODES[mode].anchors;
+  base[i]=text;LS.set('anchors_'+mode,base);
+};
+
+/* ===== 记录结构 =====
+   records[key] = {mode:'work', done:[true,false,false],
+     note:['一句话','一句话','一句话'],
+     b:{did,feel,idea,sum,quote}} */
+const recGet=k=>LS.get('rec_'+k,null);
+const recSet=(k,v)=>LS.set('rec_'+k,v);
+const anchorCount=r=>r&&r.done?r.done.filter(Boolean).length:0;
+const isPass=r=>r&&r.done&&r.done.length&&r.done.every(Boolean);
+const hasData=r=>r&&(r.done.some(Boolean)||r.note.some(x=>x&&x.trim())||(r.b&&Object.values(r.b).some(x=>x&&x.trim())));
+
+/* 第 N 天：以开始日期起算（含当天），未开始过则从第一次打卡那天算 */
+function dayNo(k){
+  const start=LS.get('startDate',null);
+  if(!start)return null;
+  return Math.floor((parseKey(k)-parseKey(start))/86400000)+1;
+}
+function ensureStart(k){
+  if(!LS.get('startDate',null))LS.set('startDate',k);
+}
+function endDate(){
+  const s=LS.get('startDate',null);if(!s)return '';
+  const e=new Date(parseKey(s));e.setFullYear(e.getFullYear()+1);e.setDate(e.getDate()-1);
+  return e.getFullYear()+'.'+pad2(e.getMonth()+1)+'.'+pad2(e.getDate());
+}
+
+/* ===== 今日打卡页 ===== */
+function renderToday(){
+  const tk=todayKey();
+  ensureStart(tk);
+  const rec=recGet(tk)||{mode:'home',done:[false,false,false],note:['','',''],b:{}};
+  if(!rec.done)rec.done=[false,false,false];
+  if(!rec.note)rec.note=['','',''];
+  if(!rec.b)rec.b={};
+  if(!MODES[rec.mode])rec.mode='home';
+  const M=MODES[rec.mode];
+  const anchors=anchorsOf(rec.mode);
+  const n=dayNo(tk);
+  const done=anchorCount(rec);
+  const pass=isPass(rec);
+  const B_FIELDS=[['did','📝 实际做了什么','自由记录，不设考核。就写流水账也行。'],['feel','💬 情绪 / 感受','今天状态怎么样？'],['idea','💡 新发现 / 灵感','看到了什么、想到了什么'],['sum','📌 今日总结','一句话收束今天'],['quote','🌤 每日一句','抄一句打动你的话']];
+  return `
+  <div class="head"><h1>个人成长 · 第一年</h1><p>${fmtCN(LS.get('startDate',tk))} – ${endDate()}</p></div>
+
+  <!-- 顶部：天数 + 模式 -->
+  <div class="card tint" style="--bgc:#EAF1FB;--bd:#D6E2F5">
+    <div style="text-align:center;padding:2px 0 4px">
+      <div style="font-size:14.5px;font-weight:800;color:#2E4A7D">${fmtCN(tk)} 🌈 第 ${n} 天</div>
+      <div class="mini" style="margin-top:2px">今天是：${M.ic} <b style="color:${M.acc}">${M.n}</b> · ${esc(M.d)}</div>
+    </div>
+    <div class="hr"></div>
+    <div class="mini" style="margin-bottom:5px">选择今日模式（可随时改，锚点随之切换）：</div>
+    <div class="modes">
+      ${MODE_KEYS.map(k=>`<button class="btn ${rec.mode===k?'pri':''}" data-mode="${k}" style="--acc:${MODES[k].acc}">${MODES[k].ic} ${MODES[k].n}</button>`).join('')}
+    </div>
+  </div>
+
+  <!-- A区 · 今日三锚 -->
+  <div class="card tint" style="--bgc:${M.bgc};--bd:${M.bd}">
+    <h2>🅰 A区 · 今日三锚 <span class="badge">${done} / 3</span></h2>
+    <div class="mini" style="margin:4px 0 8px">完成即及格。每锚后面用一句话记下今天的执行情况。</div>
+    ${anchors.map((t,i)=>`
+    <div class="anchor ${rec.done[i]?'done':''}" data-ai="${i}">
+      <div class="a-top">
+        <div class="a-chk" data-chk="${i}">✓</div>
+        <div class="a-name">${i+1}️⃣ ${esc(t)}</div>
+        <div class="a-edit" data-aedit="${i}">✎</div>
+      </div>
+      ${rec.done[i]||rec.note[i]&&rec.note[i].trim()?`<input class="in a-in" data-note="${i}" placeholder="执行情况（一句话）" value="${esc(rec.note[i]||'')}">`:''}
+    </div>`).join('')}
+    <div class="verdict ${pass?'pass':(done>0?'fail':'none')}">
+      ${pass?'🎯 三锚全中 → 今天不亏，明天继续 ✅'
+        :(done>0?`完成 ${done}/3 · 还差 ${3-done} 锚 → 今天略有亏欠，别熬夜补，明天优先`
+        :'今天还没勾锚 → 勾掉任意一个就算开工')}
+    </div>
+  </div>
+
+  <!-- B区 · 今日实况 -->
+  <div class="card">
+    <h2>🅱 B区 · 今日实况 <span class="badge">自由记录</span></h2>
+    <div class="mini" style="margin:4px 0 9px">不设考核，写多少算多少。留着以后回看，比打卡本身更值钱。</div>
+    ${B_FIELDS.map(([k,label,tip])=>`
+    <div class="field">
+      <label>${label}</label>
+      <textarea class="in" data-b="${k}" rows="${k==='did'?3:2}" placeholder="${esc(tip)}">${esc(rec.b[k]||'')}</textarea>
+    </div>`).join('')}
+    <button class="btn pri wide" id="bsave" style="--acc:${M.acc}">💾 保存今日实况</button>
+  </div>
+
+  <!-- 快速跳转历史 -->
+  <div class="card">
+    <h2>🕐 最近 7 天</h2>
+    <div style="margin-top:7px">
+      ${last7().map(([k,r])=>{
+        if(!hasData(r))return `<span class="pill" style="background:#F1F1F1;color:#B0B0B0" data-jump="${k}">${k.split('-').slice(1).join('/')} · 空白</span>`;
+        const mm=MODES[r.mode]||MODES.home;
+        return `<span class="pill" style="background:${mm.bgc};color:${mm.acc}" data-jump="${k}">${k.split('-').slice(1).join('/')} ${mm.ic} ${anchorCount(r)}/3${isPass(r)?'✅':''}</span>`;
+      }).join('')||'<div class="empty">暂无记录</div>'}
+    </div>
+    <div class="mini" style="margin-top:4px">点击任意一天可回看 / 补记。</div>
+  </div>`;
+}
+
+function last7(){
+  const out=[];
+  for(let i=1;i<=7;i++){
+    const d=new Date();d.setDate(d.getDate()-i);
+    const k=d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+    out.push([k,recGet(k)]);
+  }
+  return out;
+}
+
+/* ===== 日历页 ===== */
+let calY=new Date().getFullYear(),calM=new Date().getMonth();
+function renderCalendar(){
+  const first=new Date(calY,calM,1).getDay();
+  const days=new Date(calY,calM+1,0).getDate();
+  const tk=todayKey();
+  let cells='';
+  ['日','一','二','三','四','五','六'].forEach(w=>cells+=`<div class="wd">${w}</div>`);
+  for(let i=0;i<first;i++)cells+=`<div class="d blank"></div>`;
+  let mPass=0,mRec=0;
+  for(let i=1;i<=days;i++){
+    const k=calY+'-'+(calM+1)+'-'+i;
+    const r=recGet(k);
+    const has=hasData(r);
+    if(has)mRec++;
+    if(isPass(r))mPass++;
+    const mm=r&&MODES[r.mode];
+    cells+=`<div class="d ${k===tk?'today':''}" data-day="${k}" style="${has?`background:${mm?mm.bgc:'#EEE'};color:${mm?mm.acc:'#666'};font-weight:600`:''}">${i}${has?`<span class="dot" style="background:${isPass(r)?'#3E8E5A':(mm?mm.acc:'#CCC')}"></span>`:''}</div>`;
+  }
+  return `
+  <div class="head"><h1>📅 打卡日历</h1><p>绿点 = 三锚全中 · 底色 = 当日模式</p></div>
+  <div class="card">
+    <div style="display:flex;align-items:center;margin-bottom:8px">
+      <button class="btn sm" id="calprev">‹</button>
+      <b style="flex:1;text-align:center;font-size:13.5px">${calY} 年 ${calM+1} 月</b>
+      <button class="btn sm" id="calnext">›</button>
+    </div>
+    <div class="cal">${cells}</div>
+    <div class="hr"></div>
+    <div class="stats">
+      <div class="stat" style="background:#F3FAF5"><b style="color:#3E8E5A">${mPass}</b><span>全中天数</span></div>
+      <div class="stat" style="background:#F6F6F6"><b>${mRec}</b><span>有记录天数</span></div>
+    </div>
+    <div class="mini" style="margin-top:8px">点任意日期查看 / 补记当天内容。</div>
+  </div>
+  <div class="card">
+    <h2>🏷 模式图例</h2>
+    <div style="margin-top:6px">
+      ${MODE_KEYS.map(k=>`<span class="pill" style="background:${MODES[k].bgc};color:${MODES[k].acc}">${MODES[k].ic} ${MODES[k].n}</span>`).join('')}
+      <span class="pill" style="background:#F1F1F1;color:#8A8A8A">⚪ 无记录</span>
+    </div>
+  </div>`;
+}
+
+/* ===== 复盘页 ===== */
+function renderReview(){
+  const start=LS.get('startDate',null);
+  if(!start)return `<div class="head"><h1>📊 阶段复盘</h1></div><div class="card"><div class="empty">先去「今日打卡」完成第一次打卡，就会自动开始计时 🌱</div></div>`;
+  const all=LS.keys?null:null;
+  /* 扫描 localStorage 中所有 rec_ 键 */
+  const recs=[];
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(k&&k.startsWith('gc_rec_')){
+      const dk=k.slice(7);
+      const r=LS.get('rec_'+dk,null);
+      if(hasData(r))recs.push([dk,r]);
+    }
+  }
+  recs.sort((a,b)=>parseKey(a[0])-parseKey(b[0]));
+  const total=recs.length;
+  const passes=recs.filter(([,r])=>isPass(r)).length;
+  const byMode={};MODE_KEYS.forEach(k=>byMode[k]={n:0,p:0});
+  recs.forEach(([,r])=>{if(byMode[r.mode]){byMode[r.mode].n++;if(isPass(r))byMode[r.mode].p++}});
+  /* 连续全中（截至今天往回数） */
+  let streak=0;
+  {const d=new Date();
+   for(;;){const k=d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+     const r=recGet(k);
+     if(isPass(r)){streak++;d.setDate(d.getDate()-1)}
+     else if(hasData(r)||k!==todayKey()){break}
+     else break;
+   }}
+  const n=dayNo(todayKey());
+  return `
+  <div class="head"><h1>📊 阶段复盘</h1><p>${fmtCN(start)} – ${endDate()} · 第 ${n} 天</p></div>
+  <div class="card tint" style="--bgc:#EAF1FB;--bd:#D6E2F5">
+    <div class="stats">
+      <div class="stat" style="background:#fff"><b style="color:#2E4A7D">${n}</b><span>进行天数</span></div>
+      <div class="stat" style="background:#fff"><b>${total}</b><span>有记录天数</span></div>
+      <div class="stat" style="background:#fff"><b style="color:#3E8E5A">${passes}</b><span>三锚全中</span></div>
+      <div class="stat" style="background:#fff"><b style="color:#B07C2E">${streak}</b><span>当前连击 🔥</span></div>
+    </div>
+    <div class="mini" style="margin-top:8px">全中率：<b>${total?Math.round(passes/total*100):0}%</b> · 记录率：${Math.round(total/Math.max(1,n)*100)}%</div>
+  </div>
+  <div class="card">
+    <h2>🏷 各模式表现</h2>
+    <div style="margin-top:7px">
+      ${MODE_KEYS.map(k=>{
+        const s=byMode[k],M=MODES[k];
+        const pct=s.n?Math.round(s.p/s.n*100):0;
+        return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+          <span style="flex:0 0 64px;font-size:11px;font-weight:600;color:${M.acc}">${M.ic} ${M.n}</span>
+          <div style="flex:1;height:6px;border-radius:3px;background:#EFEFEF;overflow:hidden">
+            <i style="display:block;height:100%;width:${pct}%;background:${M.acc};border-radius:3px"></i></div>
+          <span style="flex:0 0 70px;text-align:right;font-size:10px;color:#8A8A8A">${s.p}/${s.n} 天 · ${pct}%</span>
+        </div>`}).join('')}
+    </div>
+  </div>
+  <div class="card">
+    <h2>📖 全部记录回看</h2>
+    <div class="mini" style="margin:4px 0 2px">按时间倒序，只显示有内容的日子。</div>
+    <div class="hr"></div>
+    ${recs.slice().reverse().map(([k,r])=>{
+      const M=MODES[r.mode]||MODES.home;
+      const anchors=anchorsOf(r.mode);
+      const b=r.b||{};
+      return `<details class="fold">
+        <summary><span>${fmtCN(k)} ${M.ic} ${isPass(r)?'✅':anchorCount(r)+'/3'}</span><span class="arw">▶</span></summary>
+        <div style="padding:6px 2px 2px">
+          ${anchors.map((t,i)=>`<div class="hrec">${r.done[i]?'✅':'⬜'} ${esc(t)}${r.note[i]&&r.note[i].trim()?`<br><span style="color:#8A8A8A">↳ ${esc(r.note[i])}</span>`:''}</div>`).join('')}
+          ${Object.entries({did:'📝 做了',feel:'💬 情绪',idea:'💡 灵感',sum:'📌 总结',quote:'🌤 一句'}).map(([k2,lb])=>b[k2]&&b[k2].trim()?`<div class="hrec"><b style="color:${M.acc}">${lb}：</b>${esc(b[k2])}</div>`:'').join('')}
+        </div>
+      </details>`}).join('')||'<div class="empty">还没有记录</div>'}
+  </div>`;
+}
+
+/* ===== 设置页 ===== */
+function renderSettings(){
+  const start=LS.get('startDate',null);
+  return `
+  <div class="head"><h1>⚙️ 设置</h1><p>数据全部保存在本机浏览器，不上传</p></div>
+  <div class="card">
+    <h2>🗓 开始日期</h2>
+    <div class="mini" style="margin:4px 0 7px">「第 N 天」从这天起算。当前：${start?fmtCN(start):'未设置（首次打卡自动开始）'}</div>
+    <div style="display:flex;gap:6px">
+      <input class="in" id="startdate" type="date" value="${start?start.split('-').map((v,i)=>i===1?pad2(v):i===2?pad2(v):v).join('-'):''}" style="flex:1">
+      <button class="btn pri sm" id="savesd" style="--acc:#2E4A7D">保存</button>
+    </div>
+    ${start?`<div class="mini" style="margin-top:6px">一年期到 ${endDate()}，共 365 天。</div>`:''}
+  </div>
+  <div class="card">
+    <h2>🎯 三锚文案（按模式）</h2>
+    <div class="mini" style="margin:4px 0 8px">每种模式的三锚都可以改成你自己的目标，改动只影响之后的日子。</div>
+    ${MODE_KEYS.map(k=>`
+    <details class="fold" style="margin-bottom:8px">
+      <summary><span>${MODES[k].ic} ${MODES[k].n}</span><span class="arw">▶</span></summary>
+      <div style="padding:7px 2px 2px">
+        ${anchorsOf(k).map((t,i)=>`
+        <div style="display:flex;gap:5px;margin-bottom:6px">
+          <input class="in" data-anc="${k}|${i}" value="${esc(t)}" style="flex:1">
+        </div>`).join('')}
+        <button class="btn sm pri" data-ancsave="${k}" style="--acc:${MODES[k].acc}">保存${MODES[k].n}锚点</button>
+      </div>
+    </details>`).join('')}
+  </div>
+  <div class="card">
+    <h2>📦 数据管理</h2>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+      <button class="btn sm" id="exp">📤 导出备份</button>
+      <button class="btn sm" id="imp">📥 导入备份</button>
+      <button class="btn sm" id="wipe" style="color:#B5493A">🗑 清空全部数据</button>
+    </div>
+    <textarea class="in" id="dump" rows="4" style="margin-top:8px;font-size:10px" placeholder="导出的内容会出现在这里；导入时把备份粘贴进来再点导入"></textarea>
+  </div>
+  <div class="card">
+    <h2>💡 玩法说明</h2>
+    <div class="mini" style="line-height:1.9">
+      <b>三锚制</b>：每天只考核 3 件最刚的事，完成即及格（"今天不亏"），避免清单式打卡的自我消耗。<br>
+      <b>三种模式</b>：💼 工作日刚性推进 / 🏠 居家全力日 / 🚗 外出日弹性最低目标。锚点随模式自动切换，不用纠结"今天没做到"。<br>
+      <b>B区不考核</b>：实况、情绪、灵感、总结、每日一句，写给未来的自己。<br>
+      <b>复盘</b>：连击、全中率、各模式达成率，一年期满正好回看 365 天。
+    </div>
+  </div>`;
+}
+
+/* ===== 事件绑定 ===== */
+function bindToday(){
+  const tk=todayKey();
+  $$('[data-mode]').forEach(b=>b.onclick=()=>{
+    const r=recGet(tk)||{done:[false,false,false],note:['','',''],b:{}};
+    r.mode=b.dataset.mode;recSet(tk,r);
+    render('today');toast('已切换为「'+MODES[r.mode].n+'」模式 '+MODES[r.mode].ic);
+  });
+  $$('[data-chk]').forEach(el=>el.onclick=()=>{
+    const i=+el.dataset.chk;
+    const r=recGet(tk)||{done:[false,false,false],note:['','',''],b:{}};
+    r.done[i]=!r.done[i];recSet(tk,r);
+    render('today',true);
+    if(isPass(r))toast('三锚全中，今天不亏 ✅');
+  });
+  $$('[data-note]').forEach(el=>el.onchange=()=>{
+    const i=+el.dataset.note;
+    const r=recGet(tk)||{done:[false,false,false],note:['','',''],b:{}};
+    r.note[i]=el.value.slice(0,60);recSet(tk,r);
+  });
+  $$('[data-aedit]').forEach(el=>el.onclick=()=>{
+    const i=+el.dataset.aedit;
+    const r=recGet(tk)||{mode:'home',done:[false,false,false],note:['','',''],b:{}};
+    const cur=anchorsOf(r.mode)[i];
+    const v=prompt('修改「'+MODES[r.mode].n+'」第'+(i+1)+'锚（留空恢复默认）：',cur);
+    if(v===null)return;
+    saveAnchor(r.mode,i,v.trim());
+    render('today',true);toast(v.trim()?'锚点已更新 ✏️':'已恢复默认锚点');
+  });
+  on('#bsave','onclick',()=>{
+    const r=recGet(tk)||{done:[false,false,false],note:['','',''],b:{}};
+    $$('[data-b]').forEach(el=>{r.b[el.dataset.b]=el.value.slice(0,500)});
+    recSet(tk,r);toast('今日实况已保存 💾');
+  });
+  $$('[data-jump]').forEach(el=>el.onclick=()=>{viewDay(el.dataset.jump)});
+}
+function on(sel,ev,fn){const el=$(sel);if(el)el.addEventListener(ev.replace(/^on/,''),fn)}
+
+/* 单日回看 / 补记（含历史日期） */
+let viewing=null;   /* 正在查看的日期 key；null = 今天实时页 */
+function viewDay(k){
+  viewing=k;
+  current='view';
+  $$('.navitem').forEach(n=>n.classList.remove('on'));
+  render('view');
+}
+function renderView(){
+  const k=viewing,rec=recGet(k)||{mode:'home',done:[false,false,false],note:['','',''],b:{}};
+  if(!rec.done)rec.done=[false,false,false];
+  if(!rec.note)rec.note=['','',''];if(!rec.b)rec.b={};
+  if(!MODES[rec.mode])rec.mode='home';
+  const M=MODES[rec.mode],anchors=anchorsOf(rec.mode);
+  const dn=dayNo(k);
+  const n=anchorCount(rec),pass=isPass(rec);
+  return `
+  <div class="head"><h1>📆 ${fmtCN(k)}${k===todayKey()?'（今天）':''}</h1><p>${dn?'第 '+dn+' 天 · ':''}回看 / 补记</p></div>
+  <div class="card tint" style="--bgc:${M.bgc};--bd:${M.bd}">
+    <div class="mini" style="margin-bottom:5px">当日模式：</div>
+    <div class="modes">
+      ${MODE_KEYS.map(kk=>`<button class="btn ${rec.mode===kk?'pri':''}" data-vmode="${kk}" style="--acc:${MODES[kk].acc}">${MODES[kk].ic} ${MODES[kk].n}</button>`).join('')}
+    </div>
+  </div>
+  <div class="card tint" style="--bgc:${M.bgc};--bd:${M.bd}">
+    <h2>🅰 三锚 <span class="badge">${n} / 3</span></h2>
+    ${anchors.map((t,i)=>`
+    <div class="anchor ${rec.done[i]?'done':''}">
+      <div class="a-top">
+        <div class="a-chk" data-vchk="${i}">✓</div>
+        <div class="a-name">${i+1}️⃣ ${esc(t)}</div>
+      </div>
+      <input class="in a-in" data-vnote="${i}" placeholder="执行情况（一句话）" value="${esc(rec.note[i]||'')}">
+    </div>`).join('')}
+    <div class="verdict ${pass?'pass':(n>0?'fail':'none')}">${pass?'🎯 三锚全中 ✅':(n>0?'完成 '+n+'/3':'未开始')}</div>
+  </div>
+  <div class="card">
+    <h2>🅱 实况 <span class="badge">自由记录</span></h2>
+    ${[['did','📝 实际做了什么'],['feel','💬 情绪 / 感受'],['idea','💡 新发现 / 灵感'],['sum','📌 今日总结'],['quote','🌤 每日一句']].map(([k2,lb])=>`
+    <div class="field"><label>${lb}</label>
+      <textarea class="in" data-vb="${k2}" rows="2">${esc(rec.b[k2]||'')}</textarea></div>`).join('')}
+    <button class="btn pri wide" id="vsave" style="--acc:${M.acc}">💾 保存这一天</button>
+    <button class="btn wide" id="vback" style="margin-top:7px">← 返回</button>
+  </div>`;
+}
+function bindView(){
+  const k=viewing;
+  $$('[data-vmode]').forEach(b=>b.onclick=()=>{
+    const r=recGet(k)||{done:[false,false,false],note:['','',''],b:{}};
+    r.mode=b.dataset.vmode;recSet(k,r);render('view');toast('该日已切换为「'+MODES[r.mode].n+'」');
+  });
+  $$('[data-vchk]').forEach(el=>el.onclick=()=>{
+    const i=+el.dataset.vchk;
+    const r=recGet(k)||{done:[false,false,false],note:['','',''],b:{}};
+    r.done[i]=!r.done[i];recSet(k,r);render('view',true);
+    if(isPass(r))toast('三锚全中 ✅');
+  });
+  $$('[data-vnote]').forEach(el=>el.onchange=()=>{
+    const i=+el.dataset.vnote;
+    const r=recGet(k)||{done:[false,false,false],note:['','',''],b:{}};
+    r.note[i]=el.value.slice(0,60);recSet(k,r);
+  });
+  on('#vsave','onclick',()=>{
+    const r=recGet(k)||{done:[false,false,false],note:['','',''],b:{}};
+    $$('[data-vb]').forEach(el=>{r.b[el.dataset.vb]=el.value.slice(0,500)});
+    recSet(k,r);toast('已保存 '+fmtCN(k)+' 💾');
+  });
+  on('#vback','onclick',()=>{viewing=null;go('today')});
+}
+function bindCalendar(){
+  on('#calprev','onclick',()=>{calM--;if(calM<0){calM=11;calY--}render('calendar')});
+  on('#calnext','onclick',()=>{calM++;if(calM>11){calM=0;calY++}render('calendar')});
+  $$('#main .cal .d[data-day]').forEach(el=>el.onclick=()=>viewDay(el.dataset.day));
+}
+function bindReview(){}
+function bindSettings(){
+  on('#savesd','onclick',()=>{
+    const v=$('#startdate').value;
+    if(!v)return toast('请选择日期');
+    const [y,m,d]=v.split('-').map(Number);
+    LS.set('startDate',y+'-'+m+'-'+d);
+    render('settings');toast('开始日期已设为 '+fmtCN(y+'-'+m+'-'+d));
+  });
+  $$('[data-ancsave]').forEach(b=>b.onclick=()=>{
+    const mode=b.dataset.ancsave;
+    const arr=anchorsOf(mode);
+    $$(`[data-anc^="${mode}|"]`).forEach(el=>{const i=+el.dataset.anc.split('|')[1];arr[i]=el.value.trim()||MODES[mode].anchors[i]});
+    LS.set('anchors_'+mode,arr);
+    toast(MODES[mode].n+'锚点已保存 ✅');
+  });
+  on('#exp','onclick',()=>{
+    const out={};
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i);
+      if(k&&k.startsWith('gc_'))out[k]=localStorage.getItem(k);
+    }
+    $('#dump').value=JSON.stringify(out);
+    $('#dump').select();
+    try{document.execCommand('copy');toast('已导出并复制 📤')}catch(e){toast('已导出，请手动复制')}
+  });
+  on('#imp','onclick',()=>{
+    try{
+      const obj=JSON.parse($('#dump').value);
+      let n=0;
+      Object.entries(obj).forEach(([k,v])=>{if(k.startsWith('gc_')){localStorage.setItem(k,v);n++}});
+      toast('已导入 '+n+' 条 ✅');render('settings');
+    }catch(e){toast('导入失败：内容不是有效备份')}
+  });
+  on('#wipe','onclick',()=>{
+    if(!confirm('确定清空全部打卡数据？此操作不可恢复！'))return;
+    if(!confirm('再次确认：真的要清空吗？'))return;
+    const ks=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('gc_'))ks.push(k)}
+    ks.forEach(k=>localStorage.removeItem(k));
+    LS.set('startDate',null);
+    render('settings');toast('已清空');
+  });
+}
+
+/* ===== 渲染调度 ===== */
+const RENDER={today:[renderToday,bindToday],view:[renderView,bindView],calendar:[renderCalendar,bindCalendar],review:[renderReview,bindReview],settings:[renderSettings,bindSettings]};
+function render(tab,keepScroll){
+  const [fn,bind]=RENDER[tab]||RENDER.today;
+  const m=$('#main');
+  const sc=keepScroll?m.scrollTop:0;
+  m.innerHTML=fn();
+  m.scrollTop=sc;
+  bind&&bind();
+}
+function go(tab){
+  current=tab;viewing=tab==='today'?null:viewing;
+  $$('.navitem').forEach(n=>n.classList.toggle('on',n.dataset.tab===tab));
+  render(tab);
+}
+$$('.navitem').forEach(n=>n.onclick=()=>go(n.dataset.tab));
+
+/* 跨天检测：页面开着时日期翻转自动切到新一天 */
+let dayMark=todayKey();
+setInterval(()=>{
+  const tk=todayKey();
+  if(tk!==dayMark){dayMark=tk;if(current==='today'){render('today');toast('新的一天，开始打卡 ☀️')}}
+},30000);
+
+/* 启动 */
+go('today');
+</script>
+</body>
+</html>
